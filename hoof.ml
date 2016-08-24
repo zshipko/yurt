@@ -64,20 +64,20 @@ let register_route_string (s : server) (meth : string) (route : string) (ep : en
 let register_route (s : server) (meth : string) (r : route) (ep : endpoint) =
     register_routes s [meth, r, ep]
 
-let get (r : route) (ep : endpoint) (s : server) =
-    register_route s "GET" r ep
+let get (r : route list) (ep : endpoint) (s : server) =
+    register_route s "GET" (Route r) ep
 
-let post (r : route) (ep : endpoint) (s : server) =
-    register_route s "POST" r ep
+let post (r : route list) (ep : endpoint) (s : server) =
+    register_route s "POST" (Route r) ep
 
-let put (r : route) (ep : endpoint) (s : server) =
-    register_route s "PUT" r ep
+let put (r : route list) (ep : endpoint) (s : server) =
+    register_route s "PUT" (Route r) ep
 
-let update (r : route) (ep : endpoint) (s : server) =
-    register_route s "UPDATE" r ep
+let update (r : route list) (ep : endpoint) (s : server) =
+    register_route s "UPDATE" (Route r) ep
 
-let delete (r : route) (ep : endpoint) (s : server) =
-    register_route s "DELETE" r ep
+let delete (r : route list) (ep : endpoint) (s : server) =
+    register_route s "DELETE" (Route r) ep
 
 (** Start the server *)
 let run (s : server) =

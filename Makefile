@@ -23,4 +23,5 @@ clean:
 	rm -f *.cm* *.o *.a
 
 docs:
-	ocamldoc -d doc *.ml -html
+	mkdir -p doc
+	ocamldoc -d doc $(src) -html
