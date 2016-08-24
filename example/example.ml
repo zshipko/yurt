@@ -1,13 +1,16 @@
 open Hoof
 open Hoof.Route
+open Hoof.RequestContext
 
 let _ =
-    server "127.0.0.1" 6978
+    server "127.0.0.1" 1234
 
-    >> get (Path "/") (fun req ->
-        write_string req "testing")
+    !> get [Path ""] (fun req ->
+        finish_string req "testing")
 
-    >> get (Route [Int "a"; String "b"]) (fun req ->
-        redirect req "http://zachshipko.com")
+    !> get [Int "a"; Int "b"] (fun req ->
+        let a = param_int req.params "a" in
+        let b = param_int req.params "b" in
+        finish_string req (string_of_int (a + b)))
 
-    |>> ()
+    !>> ()

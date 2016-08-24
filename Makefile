@@ -1,4 +1,4 @@
-src=route.ml hoof.ml
+src=util.ml request_ctx.ml hdr.ml route.ml hoof.ml
 flags=-I `ocamlfind query uri` \
 	  -I `ocamlfind query conduit` \
 	  -I `ocamlfind query lwt` \

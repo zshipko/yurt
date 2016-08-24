@@ -6,39 +6,29 @@ open Cohttp_lwt_unix
 
 module Body = struct
     include Cohttp_lwt_body
+
+    let of_filename (filename : string) : t =
+        `Stream (Lwt_io.lines_of_file filename)
 end
 
 module Route = struct
     include Route
 end
 
-module Req = struct
-    type request = {
-        conn : Server.conn;
-        r : Cohttp.Request.t;
-        body : Cohttp_lwt_body.t;
-        params : Route.params;
-        mutable response_header : Header.t;
-    }
-
-    and response = (Response.t * Body.t) Lwt.t
-    and endpoint = request -> response
-
-    let make_request c r b p =
-        {
-            conn = c;
-            r = r;
-            body = b;
-            params = p;
-            response_header = Header.init ();
-        }
+module Hdr = struct
+    include Hdr
 end
 
-open Req
+module Request_ctx = struct
+    include Request_ctx
+end
+
+open Request_ctx
 
 type server = {
     host : string;
     port : int;
+    mutable static_root : string;
     mutable routes : (string * route * endpoint) list
 }
 
@@ -46,8 +36,12 @@ let server (host : string) (port : int) : server =
     {
         host = host;
         port = port;
+        static_root = "static";
         routes = [];
     }
+
+let set_static_dir (s : server) (filename : string) =
+    s.static_root <- filename
 
 exception End_route_iteration of (Cohttp.Response.t * Body.t) Lwt.t
 
@@ -95,32 +89,20 @@ let run (s : server) =
         with End_route_iteration a -> a in
     Lwt_main.run (Server.create ~mode:(`TCP (`Port s.port)) (Server.make ~callback ()))
 
-(** Write a string response *)
-let write_string ?status:(status=`OK) (req : request) (s : string) : response =
-    req.body
-    |> Body.to_string
-    >|= (fun body -> s)
-    >>= (fun body -> Server.respond_string ~headers:req.response_header ~status:status ~body ())
-
 (** Create a path based on the server host *)
 let path (s : server) (p : string list) : string =
     s.host ^  "/" ^ String.concat "/" p
-
-(** Write a redirect response *)
-let redirect (req : request) (url : string) : response =
-    Server.respond_redirect ~headers:req.response_header ~uri:(Uri.of_string url) ()
 
 (** Redirect to a local path *)
 let redirect_path (s : server) (req : request) (p : string) : response =
     Server.respond_redirect ~headers:req.response_header ~uri:(Uri.of_string (path s [p])) ()
 
-(** Write a Body.t *)
-let write ?flush:(flush=true) (req : request) (status: int) (body : Body.t) : response =
-    Server.respond ~headers:req.response_header ~status:(Code.status_of_code status) ~body ()
 
-(** DSL: add a handler *)
-let (>>) (s : server) (fn :  server -> unit) : server =
-    fn s; s
+module Dsl = struct
+    (** DSL: add a handler *)
+    let (>>) (s : server) (fn :  server -> unit) : server =
+        fn s; s
 
-(** DSL: run the main loop *)
-let (|>>) (s : server) (u : unit) = run s
+    (** DSL: run the main loop *)
+    let (|>>) (s : server) (u : unit) = run s
+end
