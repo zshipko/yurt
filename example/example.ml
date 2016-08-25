@@ -4,7 +4,8 @@ let _ =
     server "127.0.0.1" 1234
 
     >> get [Path ""] (fun req ->
-        finish_string req "testing")
+        let q = query_str req "test" in
+        finish_string req q)
 
     >> get [Int "a"; Int "b"] (fun req ->
         let a = param_int req.params "a" in
