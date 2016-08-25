@@ -11,7 +11,6 @@ type request = {
     params : params;
     mutable status : Code.status_code option;
     mutable response_header : Header.t;
-    mutable env : Qe.context;
 }
 
 (** Response type *)
@@ -29,7 +28,6 @@ let make_request c r b p =
         params = p;
         status = Some `OK;
         response_header = Header.init ();
-        env = Qe.new_context ();
     }
 
 let set_status (req : request) (s : Code.status_code) =
@@ -49,6 +47,9 @@ let finish_string ?status:(status=`OK) (req : request) (s : string) : response =
     |> Cohttp_lwt_body.to_string
     >|= (fun body -> s)
     >>= (fun body -> Server.respond_string ~headers:req.response_header ~status:status ~body ())
+
+let finish_form ?status:(status=`OK) (req : request) (form : (string * string list) list) : response =
+    finish_string ~status:status req (Uri.encoded_of_query form)
 
 (** Write a redirect response *)
 let redirect (req : request) (url : string) : response =
@@ -77,3 +78,16 @@ let query_int (req : request) (name : string) : int option =
     | Some s -> (try Some (int_of_string s)
                 with _ -> None)
     | None -> None
+
+let string_of_body (req : request) : string =
+    Lwt_main.run (Cohttp_lwt_body.to_string req.body)
+
+let is_form (req : request) =
+    let open Request in
+    Header.is_form req.r.headers
+
+let parse_form (req : request) : (string, string list) Hashtbl.t =
+    let s = Uri.query_of_encoded (string_of_body req) in
+    let dst = Hashtbl.create 16 in
+    List.iter (fun (k, v) -> Hashtbl.replace dst k v) s;
+    dst

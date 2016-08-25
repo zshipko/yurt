@@ -50,10 +50,6 @@ let location (req : request) =
     let open Request in
     Header.get_location req.r.headers
 
-let is_form (req : request) =
-    let open Request in
-    Header.is_form req.r.headers
-
 let add_auth (req : request) (s : string) =
     Header.add_authorization_req req.response_header (`Basic s)
 

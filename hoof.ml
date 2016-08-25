@@ -32,24 +32,29 @@ module Server = struct
     type server = {
         host : string;
         port : int;
-        mutable static_root : string;
         mutable routes : (string * route * endpoint) list;
         mutable tls_config : Conduit_lwt_unix.server_tls_config option;
+        mutable env : Qe.context;
     }
 
     let server (host : string) (port : int) : server =
         {
             host = host;
             port = port;
-            static_root = "./static";
             routes = [];
             tls_config = None;
+            env = Qe.new_context ();
         }
 
-    let set_static_dir (s : server) (filename : string) =
-        s.static_root <- filename
+     exception End_route_iteration of (Cohttp.Response.t * Body.t) Lwt.t
 
-    exception End_route_iteration of (Cohttp.Response.t * Body.t) Lwt.t
+    (** Configure TLS for server *)
+    let configure_tls ?password:(password=`No_password) (s : server) (crt_file : string) (key_file : string) =
+        s.tls_config <- Some (`Crt_file_path crt_file, `Key_file_path key_file, password, `Port s.port)
+
+    (** Create a path based on the server host *)
+    let path (s : server) (p : string list) : string =
+        s.host ^  "/" ^ String.concat "/" p
 
     (** Sets a route for a compiled regex + endpoint function *)
     let register_routes (s : server) (r : (string * route * endpoint) list) =
@@ -65,10 +70,15 @@ module Server = struct
         register_routes s [meth, r, ep]
 
     (** Register a route for a directory *)
-    let register_static_file_route (s: server) (prefix : string) =
+    let register_static_file_route (s: server) (path : string) (prefix : string) =
         register_route s "GET" (Route [Path prefix; Match ("path", ".*")]) (fun req ->
-        let filename = Filename.concat s.static_root (param_str req.params "path") in
+        let filename = Filename.concat path (param_str req.params "path") in
         Server.respond_file ~headers:req.response_header ~fname:filename ())
+
+    (** Register a route for single file *)
+    let register_single_file_route (s: server) (filename : string)  (rt : string) =
+        register_route s "GET" (Route [Path rt]) (fun req ->
+            Server.respond_file ~headers:req.response_header ~fname:filename ())
 
     let get (r : route list) (ep : endpoint) (s : server) =
         register_route s "GET" (Route r) ep
@@ -85,8 +95,11 @@ module Server = struct
     let delete (r : route list) (ep : endpoint) (s : server) =
         register_route s "DELETE" (Route r) ep
 
-    let static (r : string) (s : server) =
-        register_static_file_route s r
+    let static (p : string) (r : string) (s : server) =
+        register_static_file_route s p r
+
+    let file (p : string) (f : string) (s : server) =
+        register_single_file_route s p f
 
     (** Start the server *)
     let create (s : server) srv =
@@ -112,26 +125,15 @@ module Server = struct
         | None ->
             create s (Server.create ~mode:(`TCP (`Port s.port)))
 
-    (** Configure TLS for server *)
-    let configure_tls ?password:(password=`No_password) (s : server) (crt_file : string) (key_file : string) =
-        s.tls_config <- Some (`Crt_file_path crt_file, `Key_file_path key_file, password, `Port s.port)
-
-    (** Create a path based on the server host *)
-    let path (s : server) (p : string list) : string =
-        s.host ^  "/" ^ String.concat "/" p
-
     (** Redirect to a local path *)
     let redirect_path (s : server) (req : request) (p : string) : response =
         Server.respond_redirect ~headers:req.response_header ~uri:(Uri.of_string (path s [p])) ()
 end
 
+include Server
+include Route
+include Request_ctx
 
-module Dsl = struct
-    include Server
-    include Request_ctx
-    include Route
-
-    (** DSL: add a handler *)
-    let (>>) (s : server) (fn :  server -> unit) : server =
-        fn s; s
-end
+(** DSL: add a handler *)
+let (>>) (s : server) (fn :  server -> unit) : server =
+    fn s; s
