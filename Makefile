@@ -5,20 +5,20 @@ flags=-I `ocamlfind query uri`,\
 	  -I `ocamlfind query qe`
 
 all:
-	ocamlbuild -cflags "$(flags)" hoof.cmxa hoof.cma
+	ocamlbuild -cflags "$(flags)" yurt.cmxa yurt.cma
 
 lib.byte:
-	ocamlbuild -pkg qe -pkg cohttp.lwt hoof.cma
+	ocamlbuild -pkg qe -pkg cohttp.lwt yurt.cma
 
 lib.native:
-	ocamlbuild -cflags "$(flags)" hoof.cmxa
+	ocamlbuild -cflags "$(flags)" yurt.cmxa
 
 install:
 	$(MAKE) uninstall || :
-	cd _build && ocamlfind install hoof ../META hoof.cmxa hoof.cma *.cmx *.cmo *.cmi hoof.a
+	cd _build && ocamlfind install yurt ../META yurt.cmxa yurt.cma *.cmx *.cmo *.cmi yurt.a
 
 uninstall:
-	ocamlfind remove hoof
+	ocamlfind remove yurt
 
 clean:
 	rm -rf _build

@@ -1,7 +1,7 @@
-Hoof
+Yurt
 ====
 
-`hoof` is an HTTP microframework for OCaml
+`yurt` is an HTTP microframework for OCaml
 
 ## Dependencies
 
@@ -12,11 +12,12 @@ Hoof
 
 ## Usage
 
-    open Hoof
+    open Yurt
+
     server "127.0.0.1" 1234
     >> get [String "a"] (fun req ->
         write_string req "Hello, World!")
-    |>> ()
+    |> run
 
 ## Documentation
 
