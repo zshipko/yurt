@@ -11,8 +11,18 @@ Please note that the `yurt` API is not stable and will be evolving rapdily, incl
     - `opam install lwt`
 - Cohttp
     - `opam install cohttp`
-- Qe
-    - [https://github.com/zshipko/qe](https://github.com/zshipko/qe)
+- ocamlbuild
+
+## Building
+
+Simply:
+
+    make
+    make install
+
+To uninstall:
+
+    make uninstall
 
 ## Usage
 
