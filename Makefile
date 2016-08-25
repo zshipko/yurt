@@ -4,7 +4,8 @@ flags=-I `ocamlfind query uri`,\
 	  -I `ocamlfind query cohttp.lwt`,\
 	  -I `ocamlfind query qe`
 
-all:  lib.byte lib.native
+all:
+	ocamlbuild -cflags "$(flags)" hoof.cmxa hoof.cma
 
 lib.byte:
 	ocamlbuild -pkg qe -pkg cohttp.lwt hoof.cma
