@@ -3,6 +3,10 @@ open Hoof
 let _ =
     let ctx = server "127.0.0.1" 1234 in ctx
 
+    (** Uncomment this block to configure TLS
+    >> fun ctx ->
+        configure_tls ctx "./server.crt" "./server.key"; ctx *)
+
     >> static "./static" "files"
 
     >> file "./static/test.html" "testing"
