@@ -2,7 +2,7 @@ open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 
-open Request_ctx
+open Hoof_request_ctx
 
 type cookie = Cookie.Set_cookie_hdr.t
 
@@ -23,7 +23,7 @@ let cookies (req : request) =
 (** Get header field *)
 let get (req : request) (key : string) =
     let open Request in
-    Util.unwrap_option (Header.get req.r.headers key)
+    Hoof_util.unwrap_option (Header.get req.r.headers key)
 
 (** Get header list *)
 let get_multi (req : request) (key : string) =

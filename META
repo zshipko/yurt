@@ -1,6 +1,6 @@
 name="hoof"
 description="HTTP microframework"
 version="0.1"
-requires="str,cohttp.lwt"
+requires="str,cohttp.lwt,qe"
 archive(native)="hoof.cmxa"
 archive(byte)="hoof.cma"

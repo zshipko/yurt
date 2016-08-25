@@ -7,6 +7,7 @@ type route =
     | String of string
     | Int of string
     | Path of string
+    | Match of string * string
     | Static of string list
     | Route of route list
 
@@ -22,6 +23,7 @@ let rec string_of_route (r : route) : string  =
     | String s -> "\\([A-Za-z0-9]+\\)"
     | Int s -> "\\([0-9]+\\)"
     | Path s -> s
+    | Match (_, s) -> "\\(" ^ s ^ "\\)"
     | Static p -> String.concat "/" p
     | Route p -> "/" ^ String.concat "/" (List.map string_of_route p) ^ "/?"
 
@@ -32,10 +34,10 @@ let regexp_of_route (r : route) : Str.regexp =
         let rx = Str.regexp (string_of_route r) in
         Hashtbl.replace route_cache r rx; rx
 
-(** Returns a list of variables found in an route *)
+(** Returns a list of variables found in a route *)
 let rec variables (r : route) : route list =
     match r with
-    | String _ | Int _ -> [r]
+    | String _ | Int _ | Match _ -> [r]
     | Route (h::t) -> variables h @ variables (Route t)
     | Route [] -> []
     | Path _ | Static _ -> []
@@ -58,6 +60,9 @@ let get_params (r : route) (s : string) : params =
         | Int key ->
             Hashtbl.replace p key (Int (Str.matched_group !idx s));
             idx := !idx + 1
+        | Match (key, _) ->
+            Hashtbl.replace p key (String (Str.matched_group !idx s));
+            idx := !idx + 1
         | Path _ | Static _ -> ()
         | Route (h::t) -> findvar h; findvar (Route t)
         | Route [] -> () in
@@ -67,6 +72,9 @@ let get_params (r : route) (s : string) : params =
 let param_int (p : params) (s : string) : int =
     match Hashtbl.find p s with
     | Int i -> int_of_string i
+    | String s ->
+        (try int_of_string s
+        with _ -> raise Invalid_route_type)
     | _ -> raise Invalid_route_type
 
 (** Get a single parameter as string by name *)

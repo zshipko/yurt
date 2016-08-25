@@ -1,26 +1,29 @@
-src=util.ml request_ctx.ml hdr.ml route.ml hoof.ml
+src=hoof_util.ml hoof_route.ml hoof_request_ctx.ml hoof_hdr.ml  hoof.ml
 flags=-I `ocamlfind query uri` \
 	  -I `ocamlfind query conduit` \
 	  -I `ocamlfind query lwt` \
-	  -I `ocamlfind query cohttp.lwt`
+	  -I `ocamlfind query cohttp.lwt` \
+	  -I `ocamlfind query qe`
+
+all:  lib.byte lib.native
 
 lib.byte:
-	ocamlc $(flags) -a -o hoof.cma $(src)
+	ocamlbuild -pkg qe -pkg cohttp.lwt hoof.cma
 
 lib.native:
-	ocamlopt $(flags) -a -o  hoof.cmxa $(src)
+	mkdir -p _build
+	ocamlopt $(flags) -a -o  _build/hoof.cmxa $(src)
+	mv *.o *.cmi *.cmx _build
 
-all: lib.native lib.byte
-
-install: all
+install:
 	$(MAKE) uninstall || :
-	ocamlfind install hoof META hoof.cmxa hoof.cma *.cmx *.cmo *.cmi *.o hoof.a
+	cd _build && ocamlfind install hoof ../META hoof.cmxa hoof.cma *.cmx *.cmo *.cmi hoof.a
 
 uninstall:
 	ocamlfind remove hoof
 
 clean:
-	rm -f *.cm* *.o *.a
+	rm -rf _build
 
 docs:
 	mkdir -p doc
