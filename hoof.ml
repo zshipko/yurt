@@ -115,10 +115,8 @@ module Dsl = struct
     include Server
     include Request_ctx
     include Route
+
     (** DSL: add a handler *)
     let (>>) (s : server) (fn :  server -> unit) : server =
         fn s; s
-
-    (** DSL: run the main loop *)
-    let (|>>) (s : server) (u : unit) = run s
 end

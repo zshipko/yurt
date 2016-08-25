@@ -66,13 +66,14 @@ let query (req : request) (name : string) : (string * string list) list =
     List.filter (fun (key, _) ->
         key = name) q
 
-let query_str (req : request) (name : string) : string =
+let query_str (req : request) (name : string) : string option =
     match query req name with
-    | (k, v::_)::_ -> v
-    | _ -> ""
+    | (k, v::_)::_ -> Some v
+    | _ -> None
 
-let query_int (req : request) (name : string) : int =
-    try int_of_string (query_str req name)
-    with _ -> 0
-
-
+let query_int (req : request) (name : string) : int option =
+    let qs = query_str req name in
+    match qs with
+    | Some s -> (try Some (int_of_string s)
+                with _ -> None)
+    | None -> None

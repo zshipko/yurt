@@ -21,12 +21,12 @@ let cookies (req : request) =
     Cookie.Cookie_hdr.extract req.r.headers
 
 (** Get header field *)
-let get (req : request) (key : string) =
+let get (req : request) (key : string) : string option =
     let open Request in
-    Hoof_util.unwrap_option (Header.get req.r.headers key)
+    Header.get req.r.headers key
 
 (** Get header list *)
-let get_multi (req : request) (key : string) =
+let get_multi (req : request) (key : string) : string list =
     let open Request in
     Header.get_multi req.r.headers key
 
