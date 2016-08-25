@@ -1,11 +1,11 @@
 open Hoof
 
 let _ =
-    let ctx = server "127.0.0.1" 1234 in ctx
+    server "127.0.0.1" 1234
 
     (** Uncomment this block to configure TLS
     >> fun ctx ->
-        configure_tls ctx "./server.crt" "./server.key"; ctx *)
+        configure_tls ctx "./server.crt" "./server.key" *)
 
     >> static "./static" "files"
 
@@ -30,12 +30,14 @@ let _ =
         finish_string req (string_of_int (a + b)))
 
     (** Server env *)
-    >> get [Path "add"; Int "a"] (fun req ->
-        let _ = Qe.run ctx.env ("a =" ^ param_str req.params "a") in
-        finish_string req "OK")
+    >*> (fun ctx ->
+        get [Path "add"; Int "a"] (fun req ->
+            let _ = Qe.run ctx.env ("a =" ^ param_str req.params "a") in
+        finish_string req "OK"))
 
-    >> get [Path "get"; String "a"] (fun req ->
-        let v = Qe.get ctx.env (Qe.mk_var (param_str req.params "a")) in
-        finish_string req (Qe.string_of_expr v))
+    >*> (fun ctx ->
+        get [Path "get"; String "a"] (fun req ->
+            let v = Qe.get ctx.env (Qe.mk_var (param_str req.params "a")) in
+        finish_string req (Qe.string_of_expr v)))
 
 |> run

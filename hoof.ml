@@ -49,8 +49,8 @@ module Server = struct
      exception End_route_iteration of (Cohttp.Response.t * Body.t) Lwt.t
 
     (** Configure TLS for server *)
-    let configure_tls ?password:(password=`No_password) (s : server) (crt_file : string) (key_file : string) =
-        s.tls_config <- Some (`Crt_file_path crt_file, `Key_file_path key_file, password, `Port s.port)
+    let configure_tls ?password:(password=`No_password) (s : server) (crt_file : string) (key_file : string) : server =
+        s.tls_config <- Some (`Crt_file_path crt_file, `Key_file_path key_file, password, `Port s.port); s
 
     (** Create a path based on the server host *)
     let path (s : server) (p : string list) : string =
@@ -59,7 +59,7 @@ module Server = struct
     (** Sets a route for a compiled regex + endpoint function *)
     let register_routes (s : server) (r : (string * route * endpoint) list) =
         s.routes <- s.routes @ (List.map (fun (meth, x, ep) ->
-            (String.uppercase_ascii meth, x, ep)) r)
+            (String.uppercase_ascii meth, x, ep)) r); s
 
     (** Register a single route *)
     let register_route_string (s : server) (meth : string) (route : string) (ep : endpoint) =
@@ -135,5 +135,8 @@ include Route
 include Request_ctx
 
 (** DSL: add a handler *)
-let (>>) (s : server) (fn :  server -> unit) : server =
-    fn s; s
+let (>>) (s : server) (fn :  server -> server ) : server =
+    fn s
+
+let (>*>) (s : server) (fn : server -> server -> server) : server =
+    fn s s
