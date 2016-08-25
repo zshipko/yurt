@@ -3,6 +3,8 @@ open Hoof.Dsl
 let _ =
     server "127.0.0.1" 1234
 
+    >> static "test"
+
     >> get [Path ""] (fun req ->
         match query_str req "test" with
         | Some s -> finish_string req s

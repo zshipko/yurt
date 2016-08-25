@@ -2,22 +2,24 @@ open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 
+(** The Hoof module provides a simple interface for building HTTP servers *)
 
+(** The Body module helps convert strings and other data to request/response bodies *)
 module Body = struct
     include Cohttp_lwt_body
-
-    let of_filename (filename : string) : t =
-        `Stream (Lwt_io.lines_of_file filename)
 end
 
+(** Routing *)
 module Route = struct
     include Hoof_route
 end
 
+(** Request/Response headers *)
 module Hdr = struct
     include Hoof_hdr
 end
 
+(** Request context *)
 module Request_ctx = struct
     include Hoof_request_ctx
 end
@@ -31,7 +33,8 @@ module Server = struct
         host : string;
         port : int;
         mutable static_root : string;
-        mutable routes : (string * route * endpoint) list
+        mutable routes : (string * route * endpoint) list;
+        mutable tls_config : Conduit_lwt_unix.server_tls_config option;
     }
 
     let server (host : string) (port : int) : server =
@@ -40,6 +43,7 @@ module Server = struct
             port = port;
             static_root = "./static";
             routes = [];
+            tls_config = None;
         }
 
     let set_static_dir (s : server) (filename : string) =
@@ -62,10 +66,9 @@ module Server = struct
 
     (** Register a route for a directory *)
     let register_static_file_route (s: server) (prefix : string) =
-        register_route s "GET" (Match ("path", ".*")) (fun req ->
+        register_route s "GET" (Route [Path prefix; Match ("path", ".*")]) (fun req ->
         let filename = Filename.concat s.static_root (param_str req.params "path") in
-        let body = Body.of_filename filename in
-        respond req body)
+        Server.respond_file ~headers:req.response_header ~fname:filename ())
 
     let get (r : route list) (ep : endpoint) (s : server) =
         register_route s "GET" (Route r) ep
@@ -86,7 +89,7 @@ module Server = struct
         register_static_file_route s r
 
     (** Start the server *)
-    let run (s : server) =
+    let create (s : server) srv =
         let callback _conn req body =
             let uri = Uri.path (Request.uri req) in
             try
@@ -99,7 +102,19 @@ module Server = struct
                     raise (End_route_iteration a)) s.routes;
                     Server.respond_not_found ()
             with End_route_iteration a -> a in
-        Lwt_main.run (Server.create ~mode:(`TCP (`Port s.port)) (Server.make ~callback ()))
+        Lwt_main.run (srv (Server.make ~callback ()))
+
+    (** Start a configured server with attached endpoints *)
+    let run (s : server) =
+        match s.tls_config with
+        | Some config ->
+            create s (Server.create ~mode:(`TLS config))
+        | None ->
+            create s (Server.create ~mode:(`TCP (`Port s.port)))
+
+    (** Configure TLS for server *)
+    let configure_tls ?password:(password=`No_password) (s : server) (crt_file : string) (key_file : string) =
+        s.tls_config <- Some (`Crt_file_path crt_file, `Key_file_path key_file, password, `Port s.port)
 
     (** Create a path based on the server host *)
     let path (s : server) (p : string list) : string =
