@@ -83,9 +83,9 @@ let expr_dict_of_query_dict (d : (string, string list) Hashtbl.t) : Qe.dict =
     try
     let _ = Hashtbl.iter (fun k v ->
         let ex =  (match v with
-            | a::[] -> convert_string_if_needed (Qe.run_ctx a)
+            | a::[] -> convert_string_if_needed (Qe.expr_of_string a)
             | _ -> Qe.Array (Array.of_list (List.map (fun n ->
-                    convert_string_if_needed (Qe.run_ctx n)) v))) in
+                    convert_string_if_needed (Qe.expr_of_string n)) v))) in
         if Yurt_json.is_valid_json ex then
             Hashtbl.replace d' k ex) d in d'
     with _ -> d'
