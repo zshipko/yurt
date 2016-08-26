@@ -40,4 +40,9 @@ let _ =
             let v = Qe.get ctx.env (Qe.mk_var (param_str req.params "a")) in
         finish_string req (Qe.string_of_expr v)))
 
+    (** Convert all query string arguments to json *)
+    >> get [Path "tojson"] (fun req ->
+        let d = query_expr req in
+        finish_json req (Json.json_of_expr d))
+
 |> run

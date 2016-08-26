@@ -7,6 +7,9 @@ open Cohttp_lwt_unix
 (** The Body module helps convert strings and other data to request/response bodies *)
 module Body = struct
     include Cohttp_lwt_body
+
+    let of_expr (ex : Qe.expr) : t =
+        of_string (Qe.string_of_expr ex)
 end
 
 (** Routing *)
@@ -22,6 +25,10 @@ end
 (** Request context *)
 module Request_ctx = struct
     include Yurt_request_ctx
+end
+
+module Json = struct
+    include Yurt_json
 end
 
 module Server = struct
@@ -134,9 +141,10 @@ include Server
 include Route
 include Request_ctx
 
-(** DSL: add a handler *)
+(** Add a handler *)
 let (>>) (s : server) (fn :  server -> server ) : server =
     fn s
 
+(** Add a handler function that takes the server as a single argument *)
 let (>*>) (s : server) (fn : server -> server -> server) : server =
     fn s s
