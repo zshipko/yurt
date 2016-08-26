@@ -1,7 +1,7 @@
 Yurt
 ====
 
-`yurt` is an HTTP "framework" for OCaml based on [Cohttp](https://github.com/mirage/cohttp).
+`yurt` is an HTTP "framework" for OCaml based on [Cohttp](https://github.com/mirage/ocaml-cohttp).
 
 Please note that the `yurt` API is not stable and will be evolving rapdily, including possible backwards-incompatible updates.
 

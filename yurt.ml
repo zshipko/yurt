@@ -31,6 +31,10 @@ module Json = struct
     include Yurt_json
 end
 
+module Multipart = struct
+    include Yurt_multipart
+end
+
 module Server = struct
     open Request_ctx
     open Hdr

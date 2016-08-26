@@ -115,6 +115,9 @@ let query_int (req : request) (name : string) : int option =
 let string_of_body (req : request) : string =
     Lwt_main.run (Cohttp_lwt_body.to_string req.body)
 
+let list_of_body (req : request) : string list =
+    Lwt_main.run (Cohttp_lwt_body.to_string_list req.body)
+
 let expr_of_body (req : request) : Qe.expr =
     try
     Qe.parse (Lwt_main.run (Cohttp_lwt_body.to_string req.body))
@@ -133,4 +136,5 @@ let parse_form (req : request) : (string, string list) Hashtbl.t =
 let parse_form_expr (req : request) : Qe.expr =
     let f = parse_form req in
     Qe.Dict (expr_dict_of_query_dict f)
+
 

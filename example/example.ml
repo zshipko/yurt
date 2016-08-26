@@ -1,4 +1,5 @@
 open Yurt
+open Multipart
 
 let _ =
     server "127.0.0.1" 1234
@@ -11,7 +12,7 @@ let _ =
 
     >> file "./static/test.html" "testing"
 
-    (** Reading POSTed form data *)
+    (** Reading POSTed, url encoded form data *)
     >> post [Path "test"] (fun req ->
         let f = parse_form req in
         let user = String.concat  " " (Hashtbl.find f "username") in
@@ -44,5 +45,17 @@ let _ =
     >> get [Path "tojson"] (fun req ->
         let d = query_expr req in
         finish_json req (Json.json_of_expr d))
+
+    (** Convert all posted arguments to json *)
+    >> post [Path "tojson"] (fun req ->
+        let d = parse_form_expr req in
+        finish_json req (Json.json_of_expr d))
+
+    >> post [Path "multipart"] (fun req ->
+        let d = Multipart.parse_multipart_form req in
+        match d with
+        | {data = d; attr = _}::_ ->
+            finish_string req d
+        | [] -> finish_string req "ERROR")
 
 |> run
