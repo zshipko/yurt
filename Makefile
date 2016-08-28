@@ -16,6 +16,7 @@ lib.native:
 install:
 	$(MAKE) uninstall || :
 	cd _build && ocamlfind install yurt ../META yurt.cmxa yurt.cma *.cmx *.cmo *.cmi yurt.a
+	rm -rf example/_build
 
 uninstall:
 	ocamlfind remove yurt

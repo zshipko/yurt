@@ -7,7 +7,7 @@ open Cohttp_lwt_unix
 type request = {
     conn : Server.conn;
     r : Cohttp.Request.t;
-    body : Cohttp_lwt_body.t;
+    body : string;
     params : params;
     mutable status : Code.status_code option;
     mutable response_header : Header.t;
@@ -20,15 +20,21 @@ and response = (Response.t * Cohttp_lwt_body.t) Lwt.t
 and endpoint = request -> response
 
 (** Make a new request object from an incomming request *)
-let make_request c r b p =
+let rec make_request c r b p =
     {
         conn = c;
         r = r;
-        body = b;
+        body = string_of_body b;
         params = p;
         status = Some `OK;
         response_header = Header.init ();
     }
+
+and string_of_body (body : Cohttp_lwt_body.t) : string =
+    Lwt_main.run (Cohttp_lwt_body.to_string body)
+
+and list_of_body (body : Cohttp_lwt_body.t) : string list =
+    Lwt_main.run (Cohttp_lwt_body.to_string_list body)
 
 let set_status (req : request) (s : Code.status_code) =
     req.status <- Some s
@@ -38,21 +44,22 @@ let make_response req =
     Response.make ?status:req.status ?headers:(Some req.response_header) ()
 
 (** Create a new response with a request and Body.t *)
-let respond req body : response =
+let resp req body : response =
     Lwt.return (make_response req, body)
 
 (** Write a string response *)
 let finish_string ?status:(status=`OK) (req : request) (s : string) : response =
-    req.body
-    |> Cohttp_lwt_body.to_string
-    >|= (fun body -> s)
-    >>= (fun body -> Server.respond_string ~headers:req.response_header ~status:status ~body ())
+    Server.respond_string ~headers:req.response_header ~status:status ~body:s ()
+
+(** Write a buffer response *)
+let finish_buffer ?status:(status=`OK) (req: request) (s : Buffer.t) : response =
+    Server.respond_string ~headers:req.response_header ~status:status ~body:(Buffer.contents s) ()
 
 let finish_json ?status:(status=`OK) (req : request) (j : Yurt_json.json) : response =
     finish_string ~status:status req (Yurt_json.string_of_json j)
 
-let finish_form ?status:(status=`OK) (req : request) (form : (string * string list) list) : response =
-    finish_string ~status:status req (Uri.encoded_of_query form)
+let finish_json_expr ?status:(status=`OK) (req : request) (ex : Qe.expr) : response =
+    finish_json ~status:status req (Yurt_json.json_of_expr ex)
 
 (** Write a redirect response *)
 let redirect (req : request) (url : string) : response =
@@ -60,7 +67,8 @@ let redirect (req : request) (url : string) : response =
 
 (** Write a Body.t *)
 let finish ?flush:(flush=true) (req : request) (status: int) (body : Cohttp_lwt_body.t) : response =
-    Server.respond ~headers:req.response_header ~status:(Code.status_of_code status) ~body ()
+    let s = Cohttp_lwt_body.to_stream body |> Cohttp_lwt_body.of_stream in
+    Server.respond ~headers:req.response_header ~flush:flush ~status:(Code.status_of_code status) ~body:s ()
 
 let uri (req : request) : Uri.t =
     Request.uri req.r
@@ -112,29 +120,16 @@ let query_int (req : request) (name : string) : int option =
                 with _ -> None)
     | None -> None
 
-let string_of_body (req : request) : string =
-    Lwt_main.run (Cohttp_lwt_body.to_string req.body)
-
-let list_of_body (req : request) : string list =
-    Lwt_main.run (Cohttp_lwt_body.to_string_list req.body)
-
-let expr_of_body (req : request) : Qe.expr =
-    try
-    Qe.parse (Lwt_main.run (Cohttp_lwt_body.to_string req.body))
-    with _ -> Qe.mk_call_string "error" [Qe.mk_string "Invalid expression"]
-
 let is_form (req : request) =
     let open Request in
     Header.is_form req.r.headers
 
-let parse_form (req : request) : (string, string list) Hashtbl.t =
-    let s = Uri.query_of_encoded (string_of_body req) in
+let parse_form_urlencoded (req : request) : (string, string list) Hashtbl.t =
+    let s = Uri.query_of_encoded req.body in
     let dst = Hashtbl.create 16 in
     List.iter (fun (k, v) -> Hashtbl.replace dst k v) s;
     dst
 
-let parse_form_expr (req : request) : Qe.expr =
-    let f = parse_form req in
+let parse_form_urlencoded_expr (req : request) : Qe.expr =
+    let f = parse_form_urlencoded req in
     Qe.Dict (expr_dict_of_query_dict f)
-
-

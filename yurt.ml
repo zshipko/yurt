@@ -74,7 +74,7 @@ module Server = struct
 
     (** Register a single route *)
     let register_route_string (s : server) (meth : string) (route : string) (ep : endpoint) =
-        register_routes s [meth, Path route, ep]
+        register_routes s [meth, `Path route, ep]
 
     (** Register a single route *)
     let register_route (s : server) (meth : string) (r : route) (ep : endpoint) =
@@ -82,29 +82,29 @@ module Server = struct
 
     (** Register a route for a directory *)
     let register_static_file_route (s: server) (path : string) (prefix : string) =
-        register_route s "GET" (Route [Path prefix; Match ("path", ".*")]) (fun req ->
+        register_route s "GET" (`Route [`Path prefix; `Match ("path", ".*")]) (fun req ->
         let filename = Filename.concat path (param_str req.params "path") in
         Server.respond_file ~headers:req.response_header ~fname:filename ())
 
     (** Register a route for single file *)
     let register_single_file_route (s: server) (filename : string)  (rt : string) =
-        register_route s "GET" (Route [Path rt]) (fun req ->
+        register_route s "GET" (`Route [`Path rt]) (fun req ->
             Server.respond_file ~headers:req.response_header ~fname:filename ())
 
     let get (r : route list) (ep : endpoint) (s : server) =
-        register_route s "GET" (Route r) ep
+        register_route s "GET" (`Route r) ep
 
     let post (r : route list) (ep : endpoint) (s : server) =
-        register_route s "POST" (Route r) ep
+        register_route s "POST" (`Route r) ep
 
     let put (r : route list) (ep : endpoint) (s : server) =
-        register_route s "PUT" (Route r) ep
+        register_route s "PUT" (`Route r) ep
 
     let update (r : route list) (ep : endpoint) (s : server) =
-        register_route s "UPDATE" (Route r) ep
+        register_route s "UPDATE" (`Route r) ep
 
     let delete (r : route list) (ep : endpoint) (s : server) =
-        register_route s "DELETE" (Route r) ep
+        register_route s "DELETE" (`Route r) ep
 
     let static (p : string) (r : string) (s : server) =
         register_static_file_route s p r

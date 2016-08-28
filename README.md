@@ -32,13 +32,13 @@ To uninstall:
     server "127.0.0.1" 1234
 
     (* Add a handler *)
-    >> get [String "a"] (fun req ->
+    >> get [`Path ""] (fun req ->
         write_string req "Hello, World!")
 
     (* Run it *)
     |> run
 
-See the `example/` folder for some slightly more detailed examples.
+See `example/example.ml` for more examples.
 
 ## Documentation
 
