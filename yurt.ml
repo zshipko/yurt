@@ -119,8 +119,10 @@ module Server = struct
             try
                 let (_, _route, _endpoint) = List.find (fun (_method, _route, _endpoint) ->
                     _method = Code.string_of_method (Request.meth req) && Route.matches _route uri) s.routes in
-                let params = get_params _route uri in
-                _endpoint (make_request_context _conn req body params)
+                Lwt.return (get_params _route uri)
+                >|= (fun params ->
+                    make_request_context _conn req body params)
+                >>= _endpoint
             with _ -> Server.respond_not_found () in
         Lwt_main.run (srv (Server.make ~callback ()))
 

@@ -1,3 +1,4 @@
+open Lwt
 open Yurt
 open Multipart
 
@@ -12,15 +13,16 @@ let _ =
 
     >> file "./static/test.html" "testing"
 
-    (** Reading POSTed, url encoded form data *)
+    (** Reading POSTed, url encoded form data, another example using lwt *)
     >> post [`Path "test"] (fun req ->
-        let f = parse_form_urlencoded req in
-        let user = String.concat  " " (Hashtbl.find f "username") in
-        finish_string req user)
+        return req
+        >|= parse_form_urlencoded
+        >|= (fun f ->
+            String.concat  " " (Hashtbl.find f "username"))
+        >>= finish_string req)
 
     >> post [`Path "echo"] (fun req ->
-        let open Lwt in
-        return req.body >>= finish_stream req)
+         finish_stream req req.body)
 
     (** Reading query string value *)
     >> get [`Path ""] (fun req ->
@@ -47,19 +49,25 @@ let _ =
 
     (** Convert all query string arguments to json *)
     >> get [`Path "tojson"] (fun req ->
-        let d = query_expr req in
-        finish_json req (Json.json_of_expr d))
+        let open Lwt in
+        return (query_expr req) >>= fun d ->
+            finish_json req (Json.json_of_expr d))
 
     (** Convert all posted arguments to json *)
     >> post [`Path "tojson"] (fun req ->
-        let d = parse_form_urlencoded_expr req in
-        finish_json req (Json.json_of_expr d))
+        return req
+        >|= parse_form_urlencoded_expr
+        >|= Json.json_of_expr
+        >>= finish_json req)
 
+    (** Returns a single multipart item if at least one is sent *)
     >> post [`Path "multipart"] (fun req ->
-        let d = Multipart.parse_form_multipart req in
-        match d with
-        | {data = d; attr = _}::_ ->
-            finish_string req d
-        | [] -> finish_string req "ERROR")
+        return req
+        >|= Multipart.parse_form_multipart
+        >>= fun d ->
+            match d with
+            | {data = d; attr = _}::_ ->
+                finish_string req d
+            | [] -> finish_string req "ERROR")
 
 |> run

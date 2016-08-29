@@ -102,3 +102,6 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
         | x ->
             Buffer.add_string buffer x;
             Buffer.add_string buffer "\r\n") lines in !out
+
+let parse_form_multipart_lwt (req : Yurt_request_ctx.request_context) : multipart list Lwt.t =
+   Lwt.return (parse_form_multipart req)

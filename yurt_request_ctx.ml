@@ -30,6 +30,7 @@ let rec make_request_context c r b p =
         response_header = Header.init ();
     }
 
+(** Block and get the contents of a `body` (stream) *)
 let list_of_body (s : string Lwt_stream.t) : string list =
     Lwt_main.run (Lwt_stream.to_list s)
 
@@ -60,10 +61,6 @@ let finish_string ?status:(status=`OK) (req : request_context) (s : string) : re
 (** Write a buffer response *)
 let finish_buffer ?status:(status=`OK) (req: request_context) (s : Buffer.t) : response =
     Server.respond_string ~headers:req.response_header ~status:status ~body:(Buffer.contents s) ()
-
-(** Write a response from an string Lwt.t *)
-let finish ?status:(status=`OK) (req : request_context) (s : string Lwt.t) : response  =
-    s >|= (fun body -> Server.respond_string ~headers:req.response_header ~status:status ~body ()) >>= (fun x -> x)
 
 let finish_stream ?status:(status=`OK) (req : request_context) (s : string Lwt_stream.t) : response =
         Server.respond ~headers:req.response_header ~status:status ~body:(Cohttp_lwt_body.of_stream s) ()
