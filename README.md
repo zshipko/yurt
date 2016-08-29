@@ -33,7 +33,7 @@ To uninstall:
 
     (* Add a handler *)
     >> get [`Path ""] (fun req ->
-        write_string req "Hello, World!")
+        finish_string req "Hello, World!")
 
     (* Run it *)
     |> run

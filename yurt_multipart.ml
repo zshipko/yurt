@@ -1,5 +1,7 @@
 exception Invalid_multipart_form
 
+open Lwt
+
 (** The multipart Yurt_multipart module exists because Cohttp lacks server-side
  * support for parsing multipart form requests. This module may reject your legally
  * formatted requests, but I will do my best to fix all the edge cases as they come up.
@@ -32,19 +34,18 @@ let is_file (m : multipart) : bool =
     | [] -> false
     | _ -> true
 
-let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart list =
+let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart list Lwt.t =
     (** Output *)
     let out = ref [] in
+
     let content_type = Yurt_util.unwrap_option_default (Yurt_hdr.get req "Content-Type") "" in
+
     let b = split_semicolon content_type in
     let boundary = match b with
         | x::y::[] -> String.sub y 9 (String.length y - 9)
         | _ -> raise Invalid_multipart_form in
     let boundary_a = "--" ^ boundary in
     let boundary_b = boundary_a ^ "--" in
-
-    (* Input lines *)
-    let lines = Str.split line_regexp (Yurt_request_ctx.body_string req) in
 
     (* Current multipart context *)
     let current = ref {data = ""; attr = Hashtbl.create 16; name = ""} in
@@ -55,8 +56,13 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
     (* True when the parser is in a header section *)
     let in_header = ref false in
 
-    let _ = List.iter (fun line ->
-        match line with
+    (* Input lines *)
+    Yurt_request_ctx.body_string req
+
+    >>= (fun s -> Lwt.return (Str.split line_regexp s))
+
+    >|= Lwt_list.iter_s (fun line ->
+        let _ = match line with
         (* Boundary *)
         | x when x = boundary || x = boundary_a  || x = boundary_b ->
             let c = !current in
@@ -96,12 +102,8 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
                             _inner d (i + 2)
                     in (try _inner !current.attr 1
                        with _ -> ())
-
-
         (* In body *)
         | x ->
             Buffer.add_string buffer x;
-            Buffer.add_string buffer "\r\n") lines in !out
-
-let parse_form_multipart_lwt (req : Yurt_request_ctx.request_context) : multipart list Lwt.t =
-   Lwt.return (parse_form_multipart req)
+            Buffer.add_string buffer "\r\n" in Lwt.return_unit)
+    >>= (fun _ -> Lwt.return !out)
