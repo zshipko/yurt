@@ -83,7 +83,7 @@ module Server = struct
     (** Register a route for a directory *)
     let register_static_file_route (s: server) (path : string) (prefix : string) =
         register_route s "GET" (`Route [`Path prefix; `Match ("path", ".*")]) (fun req ->
-        let filename = Filename.concat path (param_str req.params "path") in
+        let filename = Filename.concat path (param_string req.params "path") in
         Server.respond_file ~headers:req.response_header ~fname:filename ())
 
     (** Register a route for single file *)
@@ -117,15 +117,11 @@ module Server = struct
         let callback _conn req body =
             let uri = Uri.path (Request.uri req) in
             try
-            List.iter (fun (_method, _route, _endpoint) ->
-                if  _method = Code.string_of_method (Request.meth req) &&
-                    Route.matches _route uri
-                then
-                    let params = get_params _route uri in
-                    let a = _endpoint (make_request _conn req body params) in
-                    raise (End_route_iteration a)) s.routes;
-                    Server.respond_not_found ()
-            with End_route_iteration a -> a in
+                let (_, _route, _endpoint) = List.find (fun (_method, _route, _endpoint) ->
+                    _method = Code.string_of_method (Request.meth req) && Route.matches _route uri) s.routes in
+                let params = get_params _route uri in
+                _endpoint (make_request_context _conn req body params)
+            with _ -> Server.respond_not_found () in
         Lwt_main.run (srv (Server.make ~callback ()))
 
     (** Start a configured server with attached endpoints *)
@@ -137,7 +133,7 @@ module Server = struct
             create s (Server.create ~mode:(`TCP (`Port s.port)))
 
     (** Redirect to a local path *)
-    let redirect_path (s : server) (req : request) (p : string) : response =
+    let redirect_path (s : server) (req : request_context) (p : string) : response =
         Server.respond_redirect ~headers:req.response_header ~uri:(Uri.of_string (path s [p])) ()
 end
 

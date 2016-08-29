@@ -93,7 +93,7 @@ let param_float (p : params) (s : string) : float =
     | _ -> raise Invalid_route_type
 
 (** Get a single parameter as string by name *)
-let param_str (p : params) (s : string) : string =
+let param_string (p : params) (s : string) : string =
     match Hashtbl.find p s with
     | `Int s | `String s | `Float s | `Match (_, s) -> s
     | _ -> raise Invalid_route_type

@@ -15,8 +15,12 @@ type multipart = {
     attr : (string, string list) Hashtbl.t
 }
 
+let line_regexp = Str.regexp "\r\n"
+let kv_regexp = Str.regexp "\\([^=]*\\)=\"\\([^;]*\\)\";?"
+let semicolon_regexp = Str.regexp "; ?"
+
 let split_semicolon (s : string) : string list =
-    Str.split (Str.regexp "; ?") s
+    Str.split semicolon_regexp s
 
 let get_attr (m : multipart) (attr : string) : string list =
     try Hashtbl.find m.attr attr
@@ -28,17 +32,19 @@ let is_file (m : multipart) : bool =
     | [] -> false
     | _ -> true
 
-let parse_form_multipart (req: Yurt_request_ctx.request) : multipart list =
+let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart list =
     (** Output *)
     let out = ref [] in
     let content_type = Yurt_util.unwrap_option_default (Yurt_hdr.get req "Content-Type") "" in
     let b = split_semicolon content_type in
     let boundary = match b with
-        | x::y::[] -> "--" ^ (String.sub y 9 (String.length y - 9))
+        | x::y::[] -> String.sub y 9 (String.length y - 9)
         | _ -> raise Invalid_multipart_form in
+    let boundary_a = "--" ^ boundary in
+    let boundary_b = boundary_a ^ "--" in
 
     (* Input lines *)
-    let lines = Str.split (Str.regexp "\r\n") Yurt_request_ctx.(req.body) in
+    let lines = Str.split line_regexp (Yurt_request_ctx.body_string req) in
 
     (* Current multipart context *)
     let current = ref {data = ""; attr = Hashtbl.create 16; name = ""} in
@@ -49,21 +55,20 @@ let parse_form_multipart (req: Yurt_request_ctx.request) : multipart list =
     (* True when the parser is in a header section *)
     let in_header = ref false in
 
-    (* Append current multipart to the output list *)
-    let add_current () =
-        in_header := true;
-        if !current.data <> "" || Hashtbl.length !current.attr > 0 then
-            (** The new buffer contains an extra "\r\n" that needs to be removed *)
-            let _ = !current.data <- Buffer.sub buffer 0 (Buffer.length buffer - 2) in
-            let _ = out := !out @ [!current] in
-            let _ = Buffer.reset buffer in
-            current := {data = ""; attr = Hashtbl.create 16; name = ""} in
-
     let _ = List.iter (fun line ->
         match line with
         (* Boundary *)
-        | x when x = boundary || x = boundary ^ "--" ->
-            add_current ()
+        | x when x = boundary || x = boundary_a  || x = boundary_b ->
+            let c = !current in
+            let _ = in_header := true in
+            let bl = Buffer.length buffer in
+            if bl > 0 ||
+               Hashtbl.length c.attr > 0 then
+                (** The new buffer contains an extra "\r\n" that needs to be removed *)
+                let _ = c.data <- Buffer.sub buffer 0 (bl - 2) in
+                let _ = Buffer.reset buffer in
+                let _ = out := !out @ [c] in
+                current := {data = ""; attr = Hashtbl.create 16; name = ""}
 
         (* End of header *)
         | x when !in_header && x = "" ->
@@ -72,24 +77,26 @@ let parse_form_multipart (req: Yurt_request_ctx.request) : multipart list =
         (* Get attributes  *)
         | x when !in_header ->
             if try String.sub x 0 32 = "Content-Disposition: form-data; " with _ -> false then
-            if Str.string_match (Str.regexp "\\([^=]*\\)=\"\\([^;]*\\)\";?") x 31 then
-                let i = ref 1 in
-                (try
-                while true do
-                    (* Attribute key *)
-                    let k = Str.matched_group !i x in
+                if Str.string_match kv_regexp x 31 then
+                    let _end = Str.match_end () in
+                    let rec _inner d i =
+                        (* Attribute key *)
+                        let k = Str.matched_group i x in
 
-                    (* Attribute value *)
-                    let v = Str.matched_group (!i + 1) x in
+                        (* Attribute value *)
+                        let v = Str.matched_group (i + 1) x in
 
-                    if k = "name" then !current.name <- k;
-                    if Hashtbl.mem !current.attr k then
-                        let d = Hashtbl.find !current.attr k in
-                        Hashtbl.replace !current.attr k (d @ [v])
-                    else Hashtbl.replace !current.attr k [v];
-                    i := !i + 2;
-                done
-                with _ -> ())
+                        (* Set name *)
+                        if k = "name" then !current.name <- k;
+                        try
+                            let x = Hashtbl.find d k in
+                            Hashtbl.replace d k (x @ [v])
+                        with Not_found -> Hashtbl.replace d k [v];
+                        if Str.group_end i < _end then
+                            _inner d (i + 2)
+                    in (try _inner !current.attr 1
+                       with _ -> ())
+
 
         (* In body *)
         | x ->

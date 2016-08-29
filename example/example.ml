@@ -19,11 +19,12 @@ let _ =
         finish_string req user)
 
     >> post [`Path "echo"] (fun req ->
-        finish_string req req.body)
+        let open Lwt in
+        return req.body >>= finish_stream req)
 
     (** Reading query string value *)
     >> get [`Path ""] (fun req ->
-        match query_str req "test" with
+        match query_string req "test" with
         | Some s -> finish_string req s
         | None -> finish_string req "TEST")
 
@@ -36,12 +37,12 @@ let _ =
     (** Server env *)
     >*> (fun ctx ->
         get [`Path "add"; `Int "a"] (fun req ->
-            let _ = Qe.run ctx.env ("a =" ^ param_str req.params "a") in
+            let _ = Qe.run ctx.env ("a =" ^ param_string req.params "a") in
         finish_string req "OK"))
 
     >*> (fun ctx ->
         get [`Path "get"; `String "a"] (fun req ->
-            let v = Qe.get ctx.env (Qe.mk_var (param_str req.params "a")) in
+            let v = Qe.get ctx.env (Qe.mk_var (param_string req.params "a")) in
         finish_string req (Qe.string_of_expr v)))
 
     (** Convert all query string arguments to json *)
