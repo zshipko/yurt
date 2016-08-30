@@ -18,6 +18,16 @@ let route_cache = Hashtbl.create 16
 (** The type that contains parsed URL parameters *)
 type params = (string, route) Hashtbl.t
 
+let concat_filenames (s : string list) : string =
+    if List.length s = 0 then ""
+    else if List.length s = 1 then List.hd s
+    else List.fold_left (fun acc p ->
+        Filename.concat acc p) (List.hd s) (List.tl s)
+
+let slash_regexp = Str.regexp "/"
+
+let routevar_regexp = Str.regexp "<\\([a-z]+\\):\\([^>]+\\)>"
+
 (** Convert a route to string *)
 let rec string_of_route (r : route) : string  =
     match r with
@@ -26,7 +36,7 @@ let rec string_of_route (r : route) : string  =
     | `Float s -> "\\(-?[0-9]*[.e][0-9]*\\)"
     | `Path s -> s
     | `Match (_, s) -> "\\(" ^ s ^ "\\)"
-    | `Route p -> "/" ^ String.concat "/" (List.map string_of_route p) ^ "/?"
+    | `Route p -> "/" ^ concat_filenames (List.map string_of_route p) ^ "/?"
 
 (** Convert a route to regexp *)
 let regexp_of_route (r : route) : Str.regexp =
@@ -34,6 +44,20 @@ let regexp_of_route (r : route) : Str.regexp =
     with Not_found ->
         let rx = Str.regexp (string_of_route r) in
         Hashtbl.replace route_cache r rx; rx
+
+(** "/user/<name:int>" -> `Path "user", `Int "name" *)
+let rec route_of_string (s : string) : route =
+    let args = Str.split slash_regexp s in
+    `Route (List.map (fun arg ->
+        if Str.string_match routevar_regexp arg 0 then
+        let name = Str.matched_group 1 arg in
+        let kind = Str.matched_group 2 arg in
+        match kind with
+        | "int" -> `Int name
+        | "float" -> `Float name
+        | "string" -> `String name
+        | _ -> `Match (name, kind)
+        else `Path arg) args)
 
 (** Returns a list of variables found in a route *)
 let rec variables (r : route) : route list =
@@ -115,4 +139,6 @@ let expr_of_params (p : params) : Qe.expr =
     let dst = Hashtbl.create (Hashtbl.length p) in
     Hashtbl.iter (fun k v ->
         Hashtbl.replace dst k (expr_of_route v)) p; Qe.Dict dst
+
+
 

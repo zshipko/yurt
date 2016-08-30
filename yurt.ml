@@ -74,7 +74,7 @@ module Server = struct
 
     (** Register a single route *)
     let register_route_string (s : server) (meth : string) (route : string) (ep : endpoint) =
-        register_routes s [meth, `Path route, ep]
+        register_routes s [meth, Route.route_of_string route, ep]
 
     (** Register a single route *)
     let register_route (s : server) (meth : string) (r : route) (ep : endpoint) =
@@ -91,20 +91,20 @@ module Server = struct
         register_route s "GET" (`Route [`Path rt]) (fun req ->
             Server.respond_file ~headers:req.response_header ~fname:filename ())
 
-    let get (r : route list) (ep : endpoint) (s : server) =
-        register_route s "GET" (`Route r) ep
+    let get (r : string) (ep : endpoint) (s : server) =
+        register_route_string s "GET" r ep
 
-    let post (r : route list) (ep : endpoint) (s : server) =
-        register_route s "POST" (`Route r) ep
+    let post (r : string) (ep : endpoint) (s : server) =
+        register_route_string s "POST" r ep
 
-    let put (r : route list) (ep : endpoint) (s : server) =
-        register_route s "PUT" (`Route r) ep
+    let put (r : string) (ep : endpoint) (s : server) =
+        register_route_string s "PUT" r ep
 
-    let update (r : route list) (ep : endpoint) (s : server) =
-        register_route s "UPDATE" (`Route r) ep
+    let update (r : string) (ep : endpoint) (s : server) =
+        register_route_string s "UPDATE" r ep
 
-    let delete (r : route list) (ep : endpoint) (s : server) =
-        register_route s "DELETE" (`Route r) ep
+    let delete (r : string) (ep : endpoint) (s : server) =
+        register_route_string s "DELETE" r ep
 
     let static (p : string) (r : string) (s : server) =
         register_static_file_route s p r
@@ -143,10 +143,14 @@ include Server
 include Route
 include Request_ctx
 
+(** Convert a route-string to route type *)
+let route a =
+    Route.string_of_route (`Route a)
+
 (** Add a handler *)
-let (>>) (s : server) (fn :  server -> server ) : server =
+let (>|) (s : server) (fn :  server -> server ) : server =
     fn s
 
 (** Add a handler function that takes the server as a single argument *)
-let (>*>) (s : server) (fn : server -> server -> server) : server =
+let (>>|) (s : server) (fn : server -> server -> server) : server =
     fn s s
