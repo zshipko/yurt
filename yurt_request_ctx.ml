@@ -114,7 +114,7 @@ let query_dict_of_query (q : (string * string list) list) =
 
 let _convert_string_if_needed (ex : Qe.expr) : Qe.expr =
     match ex with
-    | Qe.Atom (Qe.Value.Var s) -> Qe.mk_string s
+    | Qe.Var s -> Qe.mk_string s
     | _ -> ex
 
 let expr_dict_of_query_dict (d : (string, string list) Hashtbl.t) : Qe.dict =

@@ -7,9 +7,8 @@ exception Invalid_json
 
 let is_valid_json (ex : Qe.expr) : bool =
     let open Qe in
-    let open Value in
     match ex with
-    | Array _ | Dict _ | Atom (Int _) | Atom (Float _) | Atom (String _) -> true
+    | Array _ | Dict _ | Int _ | Float _ | String _ -> true
     | _ -> false
 
 let json_of_expr (ex : Qe.expr) : json =
