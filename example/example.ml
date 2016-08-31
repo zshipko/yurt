@@ -14,10 +14,12 @@ let _ =
     >| file "./static/test.html" "testing"
 
     (** Reading query string value *)
-    >| get "" (fun req ->
+    >>| (fun ctx ->
+        get "" (fun req ->
+        let _ = log_warning ctx "root" "testing" in
         match query_string req "test" with
         | Some s -> finish_string req s
-        | None -> finish_string req "TEST")
+        | None -> finish_string req "TEST"))
 
     (** Url parameters *)
     >| get "/<a:int>/<b:int>" (fun req ->
@@ -55,4 +57,7 @@ let _ =
                 finish_string req d
             | [] -> finish_string req "ERROR")
 
-|> run
+    (* Uncomment this to daemonize the process
+    >|| (fun ctx -> daemonize ctx ()) *)
+
+    |> run

@@ -50,8 +50,8 @@ let location (req : request_context) =
     let open Request in
     Header.get_location req.r.headers
 
-let add_auth (req : request_context) (s : string) =
-    Header.add_authorization_req req.response_header (`Basic s)
+let set_auth (req : request_context) s =
+    Header.add_authorization_req req.response_header s
 
 let auth (req : request_context) =
     let open Request in
