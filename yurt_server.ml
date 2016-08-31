@@ -15,6 +15,9 @@ type server = {
     mutable logger : Lwt_log.logger;
 }
 
+let tls_server_key_of_config (crt, key, pass, _) =
+    `TLS (crt, key, pass)
+
 let server ?tls_config:(tls_config=None) ?logger:(logger=(!Lwt_log_core.default)) (host : string) (port : int) : server =
     {
         host = host;
@@ -126,7 +129,13 @@ let daemonize (s : server) =
 let run (s : server) =
     match s.tls_config with
     | Some config ->
-        create s (Server.create ~mode:(`TLS config))
+        Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:(Some (tls_server_key_of_config config)) ()
+        >>= (fun ctx ->
+            let ctx' = Cohttp_lwt_unix_net.init ?ctx:(Some ctx) () in
+            create s (Server.create ~mode:(`TLS config) ~ctx:ctx'); Lwt.return_unit)
     | None ->
-        create s (Server.create ~mode:(`TCP (`Port s.port)))
+        Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:None ()
+        >>= (fun ctx ->
+            let ctx' = Cohttp_lwt_unix_net.init ?ctx:(Some ctx) () in
+            create s (Server.create ~mode:(`TCP (`Port s.port)) ~ctx:ctx'); Lwt.return_unit)
 
