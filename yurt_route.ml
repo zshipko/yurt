@@ -31,7 +31,7 @@ let routevar_regexp = Str.regexp "<\\([a-z]+\\):\\([^>]+\\)>"
 (** Convert a route to string *)
 let rec string_of_route (r : route) : string  =
     match r with
-    | `String s -> "\\([A-Za-z0-9]+\\)"
+    | `String s -> "\\([^/]+\\)"
     | `Int s -> "\\(-?[0-9]+\\)"
     | `Float s -> "\\(-?[0-9]*[.e][0-9]*\\)"
     | `Path s -> s
