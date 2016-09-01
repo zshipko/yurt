@@ -127,7 +127,7 @@ let daemonize (s : server) =
 
 (** Start a configured server with attached endpoints *)
 let run (s : server) =
-    match s.tls_config with
+    Lwt_main.run (match s.tls_config with
     | Some config ->
         Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:(Some (tls_server_key_of_config config)) ()
         >>= (fun ctx ->
@@ -137,5 +137,5 @@ let run (s : server) =
         Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:None ()
         >>= (fun ctx ->
             let ctx' = Cohttp_lwt_unix_net.init ?ctx:(Some ctx) () in
-            create s (Server.create ~mode:(`TCP (`Port s.port)) ~ctx:ctx'); Lwt.return_unit)
+            create s (Server.create ~mode:(`TCP (`Port s.port)) ~ctx:ctx'); Lwt.return_unit))
 
