@@ -35,6 +35,10 @@ module Server = struct
     include Yurt_server
 end
 
+module Util = struct
+    include Yurt_util
+end
+
 include Server
 include Route
 include Request_ctx
