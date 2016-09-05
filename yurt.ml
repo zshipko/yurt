@@ -14,8 +14,8 @@ module Route = struct
 end
 
 (** Request/Response headers *)
-module Hdr = struct
-    include Yurt_hdr
+module Header = struct
+    include Yurt_header
 end
 
 (** Request context *)

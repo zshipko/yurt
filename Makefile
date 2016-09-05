@@ -7,7 +7,7 @@ flags=-I `ocamlfind query uri`,\
 all:
 	ocamlbuild -cflags "$(flags)" yurt.cmxa yurt.cma
 
-qe:
+install-qe:
 	git clone https://github.com/zshipko/qe
 	cd qe && $(MAKE) && $(MAKE) install
 

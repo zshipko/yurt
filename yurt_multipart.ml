@@ -38,7 +38,7 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
     (** Output *)
     let out = ref [] in
 
-    let content_type = Yurt_util.unwrap_option_default (Yurt_hdr.get req "Content-Type") "" in
+    let content_type = Yurt_util.unwrap_option_default (Yurt_header.get req "Content-Type") "" in
 
     let b = split_semicolon content_type in
     let boundary = match b with

@@ -32,7 +32,7 @@ let get_multi (req : request_context) (key : string) : string list =
 
 (** Set header field *)
 let set (req : request_context) (key : string) (v : string) =
-    Header.add req.response_header v
+    Header.add req.response_header key v
 
 (** Set header field to list *)
 let set_multi (req : request_context) (key : string) (v : string list) =

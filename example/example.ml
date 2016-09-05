@@ -1,3 +1,4 @@
+open Qe
 open Lwt
 open Yurt
 open Multipart
@@ -35,7 +36,7 @@ let _ =
 
     >>| (fun ctx ->
         get "/get/<a:string>" (fun req ->
-            let v = Qe.get ctx.env (Qe.mk_var (param_string req.params "a")) in
+        let v = Qe.get ctx.env (Qe.mk_var (param_string req.params "a")) in
         finish_string req (Qe.string_of_expr v)))
 
     (** Convert all query string arguments to json *)
