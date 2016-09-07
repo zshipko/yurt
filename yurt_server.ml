@@ -1,6 +1,7 @@
 open Yurt_request_ctx
 open Yurt_header
 open Yurt_route
+open Yurt_html
 
 open Lwt
 open Cohttp
@@ -72,14 +73,18 @@ let register_route (s : server) (meth : string) (r : route) (ep : endpoint) =
     register_routes s [meth, r, ep]
 
 (** Register a route for a directory *)
-let register_static_file_route (s: server) (path : string) (prefix : string) =
+let register_static_file_route ?ext:(ext=[]) (s: server) (path : string) (prefix : string) =
     register_route s "GET" (`Route [`Path prefix; `Match ("path", ".*")]) (fun req ->
     let filename = Filename.concat path (param_string req.params "path") in
     Server.respond_file ~headers:req.response_header ~fname:filename ())
 
 (** Register a route for single file *)
-let register_single_file_route (s: server) (filename : string)  (rt : string) =
+let register_single_file_route ?content_type (s: server) (filename : string)  (rt : string) =
     register_route s "GET" (`Route [`Path rt]) (fun req ->
+        let _ = match content_type with
+        | Some s ->
+            let _ = Yurt_header.set req "Content-Type" s in ()
+        | None -> () in
         Server.respond_file ~headers:req.response_header ~fname:filename ())
 
 (** Redirect to a local path *)
