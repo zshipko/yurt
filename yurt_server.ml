@@ -75,8 +75,11 @@ let register_route (s : server) (meth : string) (r : route) (ep : endpoint) =
 (** Register a route for a directory *)
 let register_static_file_route ?ext:(ext=[]) (s: server) (path : string) (prefix : string) =
     register_route s "GET" (`Route [`Path prefix; `Match ("path", ".*")]) (fun req ->
-    let filename = Filename.concat path (param_string req.params "path") in
-    Server.respond_file ~headers:req.response_header ~fname:filename ())
+    if not (Yurt_util.is_safe_path path) then
+        Server.respond_not_found ()
+    else
+        let filename = Filename.concat path (param_string req.params "path") in
+        Server.respond_file ~headers:req.response_header ~fname:filename ())
 
 (** Register a route for single file *)
 let register_single_file_route ?content_type (s: server) (filename : string)  (rt : string) =

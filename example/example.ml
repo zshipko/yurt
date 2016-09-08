@@ -17,7 +17,6 @@ let _ =
     (** Reading query string value *)
     >>| (fun ctx ->
         get "" (fun req ->
-        let _ = log_warning ctx "root" "testing" in
         match query_string req "test" with
         | Some s -> finish_string req s
         | None -> finish_string req "TEST"))
