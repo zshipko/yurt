@@ -50,6 +50,7 @@ type t = [
     | `LABEL
     | `LEGEND
     | `LI
+    | `LINK
     | `META
     | `MAIN
     | `NAV
@@ -143,6 +144,7 @@ let to_string (tag : t) : string =
     | `LABEL -> "label"
     | `LEGEND -> "legend"
     | `LI -> "li"
+    | `LINK -> "link"
     | `MAIN -> "main"
     | `META -> "meta"
     | `NAV -> "nav"
@@ -184,7 +186,7 @@ let to_string (tag : t) : string =
     | `VAR _ -> failwith "Cannot convert var to string"
 
 let nonclosing = [
-    `IMG; `INPUT; `HR; `META; `BR; `WBR; `SOURCE
+    `IMG; `INPUT; `HR; `META; `BR; `WBR; `LINK
 ]
 end
 
@@ -308,7 +310,7 @@ let label ?attr:(attr=[]) (s : string) =
     tag ~attr:attr ~content:(Some s) `LABEL
 
 let link ?children:(children=[]) ?content attr =
-    tag ~attr:attr ~content:content ~children:children `A
+    tag ~attr:attr ~content:content ~children:children `LINK
 
 let img attr =
     tag ~attr:attr `IMG
@@ -336,6 +338,9 @@ let video ?attr:(attr=[]) ?content children =
 
 let source attr =
     tag ~attr:attr `SOURCE
+
+let title content =
+    tag ~content:(Some content) `TITLE
 
 let inline (s : string) =
     tag ~content:(Some s) `RAW

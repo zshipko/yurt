@@ -87,6 +87,11 @@ let finish_stream ?status:(status=`OK) (req : request_context) (s : string Lwt_s
 let finish_json ?status:(status=`OK) (req : request_context) (j : Yurt_json.json) : response =
     finish_string ~status:status req (Yurt_json.string_of_json j)
 
+(** Finish with HTML *)
+let finish_html ?status:(status=`OK) (req : request_context) (h : Yurt_html.t) : response =
+    finish_string ~status:status req (Yurt_html.to_string h)
+
+
 (** Convert expr to JSON and finish *)
 let finish_json_expr ?status:(status=`OK) (req : request_context) (ex : Qe.expr) : response =
     finish_json ~status:status req (Yurt_json.json_of_expr ex)
