@@ -119,7 +119,10 @@ let query_all (req : request_context) : (string * string list) list =
 let query_dict_of_query (q : (string * string list) list) =
     let d = Hashtbl.create 16 in
     List.iter (fun (k, v) ->
-        Hashtbl.replace d k v) q; d
+        if Hashtbl.mem d k then
+            let l = Hashtbl.find d k in
+            Hashtbl.replace d k (l @ v)
+        else Hashtbl.replace d k v) q; d
 
 let _convert_string_if_needed (ex : Qe.expr) : Qe.expr =
     match ex with
@@ -183,7 +186,11 @@ let parse_form_urlencoded (req : request_context) : (string, string list) Hashtb
     body_string req
     >|= Uri.query_of_encoded
     >|= Lwt_list.iter_s (fun (k, v) ->
-        Lwt.return (Hashtbl.replace dst k v))
+        Lwt.return (if Hashtbl.mem dst k then
+            let l = Hashtbl.find dst k in
+            Hashtbl.replace dst k (l @ v)
+        else
+        Hashtbl.replace dst k v))
     >>= (fun _ -> Lwt.return dst)
 
 (** Parse URL encoded form into a Qe.expr *)
