@@ -86,13 +86,13 @@ let finish_stream ?status:(status=`OK) (req : request_context) (s : string Lwt_s
 (** Finish with JSON *)
 let finish_json ?status:(status=`OK) (req : request_context) (j : Yurt_json.json) : response =
     let open Request in
-    let _ = Header.add req.r.headers "Content-Type" "application/json" in
+    let _ = req.response_header <- Header.replace req.response_header "Content-Type" "application/json" in
     finish_string ~status:status req (Yurt_json.string_of_json j)
 
 (** Finish with HTML *)
 let finish_html ?status:(status=`OK) (req : request_context) (h : Yurt_html.t) : response =
     let open Request in
-    let _ = Header.add req.r.headers "Content-Type" "text/html" in
+    let _ = req.response_header <- Header.replace req.response_header "Content-Type" "text/html" in
     finish_string ~status:status req (Yurt_html.to_string h)
 
 

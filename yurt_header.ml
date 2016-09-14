@@ -13,7 +13,7 @@ let create_cookie =
 (** Write cookie to request *)
 let set_cookie ?version:(version=`HTTP_1_0) (req : request_context) (c : cookie) =
     let k, v = Cookie.Set_cookie_hdr.serialize c in
-    Header.replace req.response_header k v
+    req.response_header <-  Header.replace req.response_header k v
 
 (** Get from request cookies *)
 let cookies (req : request_context) =
@@ -32,15 +32,15 @@ let get_multi (req : request_context) (key : string) : string list =
 
 (** Set header field *)
 let set (req : request_context) (key : string) (v : string) =
-    Header.add req.response_header key v
+    req.response_header <- Header.add req.response_header key v
 
 (** Set header field to list *)
 let set_multi (req : request_context) (key : string) (v : string list) =
-    Header.add_multi req.response_header key v
+    req.response_header <- Header.add_multi req.response_header key v
 
 (** Remove header field *)
 let remove (req : request_context) (key : string) =
-    Header.remove req.response_header key
+    req.response_header <- Header.remove req.response_header key
 
 let content_type (req : request_context) =
     let open Request in
@@ -51,7 +51,7 @@ let location (req : request_context) =
     Header.get_location req.r.headers
 
 let set_auth (req : request_context) s =
-    Header.add_authorization_req req.response_header s
+    req.response_header <- Header.add_authorization_req req.response_header s
 
 let auth (req : request_context) =
     let open Request in
