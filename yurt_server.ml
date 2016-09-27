@@ -116,7 +116,7 @@ let file (p : string) (f : string) (s : server) =
     register_single_file_route s p f
 
 (** Start the server *)
-let create (s : server) srv =
+let rec create (s : server) srv =
     let callback _conn req body =
         let uri = Uri.path (Request.uri req) in
         try
@@ -133,10 +133,10 @@ let create (s : server) srv =
 let daemonize (s : server) =
     Lwt_daemon.daemonize ~stdin:`Close ~stdout:(`Log s.logger) ~stderr:(`Log s.logger)
 
+exception Cannot_start_server
+
 (** Start a configured server with attached endpoints *)
-let run (s : server) =
-    while true do (* This is needed because Cohttp is known to raise errors during high load *)
-    try
+let run_server (s : server) =
     Lwt_main.run (match s.tls_config with
     | Some config ->
         Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:(Some (tls_server_key_of_config config)) ()
@@ -148,5 +148,20 @@ let run (s : server) =
         >>= (fun ctx ->
             let ctx' = Cohttp_lwt_unix_net.init ?ctx:(Some ctx) () in
             create s (Server.create ~mode:(`TCP (`Port s.port)) ~ctx:ctx')))
-    with _ -> ()
+
+let run_auto_restart (s : server) =
+    while true do
+        run_server s
     done
+
+let run_fork_auto_restart (s : server) =
+    while true do
+    match Lwt_unix.fork () with
+    | -1 -> raise Cannot_start_server
+    | 0 ->
+        run_server s
+    | n ->
+        let _ = Lwt_main.run (Lwt_unix.waitpid [] n) in ()
+    done
+
+let run = run_fork_auto_restart
