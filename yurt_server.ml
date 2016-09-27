@@ -159,7 +159,8 @@ let run_fork_auto_restart (s : server) =
     match Lwt_unix.fork () with
     | -1 -> raise Cannot_start_server
     | 0 ->
-        run_server s
+        run_server s;
+        exit 0
     | n ->
         let _ = Lwt_main.run (Lwt_unix.waitpid [] n) in ()
     done
