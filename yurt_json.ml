@@ -1,3 +1,7 @@
+open Qe
+include Qe_encoder
+
+
 type json = [
     | `Array of Qe.expr array
     | `Dict of Qe.dict
@@ -5,31 +9,45 @@ type json = [
 
 exception Invalid_json
 
-let is_valid_json (ex : Qe.expr) : bool =
+let rec is_valid_json (ex : Qe.expr) : bool =
     let open Qe in
     match ex with
-    | Array _ | Dict _ | Int _ | Float _ | String _ -> true
+    | Array a ->
+       Array.for_all is_valid_json a
+    | Dict a ->
+        Hashtbl.fold (fun k v acc ->
+            acc && is_valid_json v) a true
+    | Var _  | Int _ | Float _ | String _ -> true
     | _ -> false
 
+let validate_json ex =
+    if is_valid_json ex then
+        match ex with
+        | Var s -> String s
+        | _ -> ex
+    else raise Invalid_json
+
 let json_of_expr (ex : Qe.expr) : json =
-    match ex with
-    | Qe.Array a -> `Array a
-    | Qe.Dict a -> `Dict a
+    match validate_json ex with
+    | Array a -> `Array a
+    | Dict a -> `Dict a
     | _ -> raise Invalid_json
 
 let expr_of_json (j : json) : Qe.expr =
     match j with
-    | `Array a -> Qe.Array a
-    | `Dict a -> Qe.Dict a
+    | `Array a -> Array a
+    | `Dict a -> Dict a
 
 let json_of_string (s : string) : json =
-    match Qe.parse s with
-    | Qe.Array a -> `Array a
-    | Qe.Dict a -> `Dict a
+    match validate_json (Qe.parse s) with
+    | Array a ->
+        `Array a
+    | Dict a ->
+        `Dict a
     | _ -> raise Invalid_json
 
 let string_of_json (j : json) : string =
-    Qe.string_of_expr (expr_of_json j)
+    string_of_expr (expr_of_json j)
 
 
 

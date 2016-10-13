@@ -9,35 +9,14 @@ module Body = struct
 end
 
 (** Routing *)
-module Route = struct
-    include Yurt_route
-end
-
-(** Request/Response headers *)
-module Header = struct
-    include Yurt_header
-end
-
-(** Request context *)
-module Request_ctx = struct
-    include Yurt_request_ctx
-end
-
-module Json = struct
-    include Yurt_json
-end
-
-module Multipart = struct
-    include Yurt_multipart
-end
-
-module Server = struct
-    include Yurt_server
-end
-
-module Util = struct
-    include Yurt_util
-end
+module Route = Yurt_route
+module Header = Yurt_header
+module Request_ctx = Yurt_request_ctx
+module Json = Yurt_json
+module Multipart = Yurt_multipart
+module Server = Yurt_server
+module Client = Yurt_client
+module Util = Yurt_util
 
 include Server
 include Route

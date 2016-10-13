@@ -125,7 +125,7 @@ let param_string (p : params) (s : string) : string =
 (* Convert a route element to Qe.expr *)
 let rec expr_of_route (r : route) : Qe.expr =
      match r with
-        | `Int i -> Qe.mk_int (Int64.of_string i)
+        | `Int i -> Qe.Int (Int64.of_string i)
         | `Float i -> Qe.mk_float (float_of_string i)
         | `String "true" -> Qe.mk_bool true
         | `String "false" -> Qe.mk_bool false

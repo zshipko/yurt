@@ -312,6 +312,9 @@ let label ?attr:(attr=[]) (s : string) =
 let link ?children:(children=[]) ?content attr =
     tag ~attr:attr ~content:content ~children:children `LINK
 
+let a ?children:(children=[]) attr content =
+    tag ~attr:attr ~content:(Some content) ~children:children `A
+
 let img attr =
     tag ~attr:attr `IMG
 
