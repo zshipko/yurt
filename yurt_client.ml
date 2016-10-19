@@ -2,7 +2,7 @@ open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 
-open Yurt_json
+open Qe_json
 
 let get ?headers url =
     Client.get ?headers (Uri.of_string url) >>= fun (res, body) ->
@@ -19,7 +19,7 @@ let call ?ctx ?headers ?body meth url =
     Client.call ?ctx ?headers ?body meth (Uri.of_string url)
 
 let to_json c =
-    Lwt.return (Yurt_json.json_of_string c)
+    Lwt.return (Qe_json.json_of_string c)
 
 let post_json ?headers ?body url =
     post ?headers ?body url >>= to_json

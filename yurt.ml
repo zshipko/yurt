@@ -12,7 +12,6 @@ end
 module Route = Yurt_route
 module Header = Yurt_header
 module Request_ctx = Yurt_request_ctx
-module Json = Yurt_json
 module Multipart = Yurt_multipart
 module Server = Yurt_server
 module Client = Yurt_client

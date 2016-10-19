@@ -84,10 +84,10 @@ let finish_stream ?status:(status=`OK) (req : request_context) (s : string Lwt_s
         Server.respond ~headers:req.response_header ~status:status ~body:(Cohttp_lwt_body.of_stream s) ()
 
 (** Finish with JSON *)
-let finish_json ?status:(status=`OK) (req : request_context) (j : Yurt_json.json) : response =
+let finish_json ?status:(status=`OK) (req : request_context) (j : Qe_json.json) : response =
     let open Request in
     let _ = req.response_header <- Header.replace req.response_header "Content-Type" "application/json" in
-    finish_string ~status:status req (Yurt_json.string_of_json j)
+    finish_string ~status:status req (Qe_json.string_of_json j)
 
 (** Finish with HTML *)
 let finish_html ?status:(status=`OK) (req : request_context) (h : Yurt_html.t) : response =
@@ -98,7 +98,7 @@ let finish_html ?status:(status=`OK) (req : request_context) (h : Yurt_html.t) :
 
 (** Convert expr to JSON and finish *)
 let finish_json_expr ?status:(status=`OK) (req : request_context) (ex : Qe.expr) : response =
-    finish_json ~status:status req (Yurt_json.json_of_expr ex)
+    finish_json ~status:status req (Qe_json.json_of_expr ex)
 
 (** Write a redirect response *)
 let redirect (req : request_context) (url : string) : response =
@@ -137,7 +137,7 @@ let expr_dict_of_query_dict (d : (string, string list) Hashtbl.t) : Qe.dict =
             | a::[] -> _convert_string_if_needed (Qe.expr_of_string a)
             | _ -> Qe.Array (Array.of_list (List.map (fun n ->
                 _convert_string_if_needed (Qe.expr_of_string n)) v))) in
-        if Yurt_json.is_valid_json ex then
+        if Qe_json.is_valid_json ex then
             Hashtbl.replace d' k ex) d in d'
     with _ -> d'
 
