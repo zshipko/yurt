@@ -1,8 +1,9 @@
-open Yurt_route
 
 open Lwt
 open Cohttp
 open Cohttp_lwt_unix
+
+open Yurt_route
 
 type request_context = {
     conn : Server.conn;
@@ -175,26 +176,3 @@ let query_float (req : request_context) (name : string) : float option =
     | Some s -> (try Some (float_of_string s)
                  with _ -> None)
     | None -> None
-
-let is_form (req : request_context) =
-    let open Request in
-    Header.is_form req.r.headers
-
-(** Parse URL encoded form *)
-let parse_form_urlencoded (req : request_context) : (string, string list) Hashtbl.t Lwt.t =
-    let dst = Hashtbl.create 16 in
-    body_string req
-    >|= Uri.query_of_encoded
-    >|= Lwt_list.iter_s (fun (k, v) ->
-        Lwt.return (if Hashtbl.mem dst k then
-            let l = Hashtbl.find dst k in
-            Hashtbl.replace dst k (l @ v)
-        else
-        Hashtbl.replace dst k v))
-    >>= (fun _ -> Lwt.return dst)
-
-(** Parse URL encoded form into a Qe.expr *)
-let parse_form_urlencoded_expr (req : request_context) : Qe.expr Lwt.t =
-    parse_form_urlencoded req
-    >|= (fun f ->
-        Qe.Dict (expr_dict_of_query_dict f))

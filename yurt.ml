@@ -12,14 +12,15 @@ end
 module Route = Yurt_route
 module Header = Yurt_header
 module Request_ctx = Yurt_request_ctx
-module Multipart = Yurt_multipart
 module Server = Yurt_server
 module Client = Yurt_client
 module Util = Yurt_util
+module Form = Yurt_form
 
 include Server
 include Route
 include Request_ctx
+include Form
 
 (** Convert a route-string to route type *)
 let route a =

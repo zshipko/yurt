@@ -59,3 +59,7 @@ let auth (req : request_context) =
     | Some (`Basic (user, pass)) -> (user, pass)
     | Some (`Other user) -> (user, "")
     | None -> ("", "")
+
+let is_form (req : request_context) =
+    let open Request in
+    Header.is_form req.r.headers

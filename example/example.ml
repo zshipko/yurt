@@ -1,7 +1,6 @@
 open Qe
 open Lwt
 open Yurt
-open Multipart
 
 let _ =
     server "127.0.0.1" 1234
@@ -50,7 +49,7 @@ let _ =
 
     (** Returns a single multipart item if at least one is sent *)
     >| post (route [`Path "multipart"]) (fun req ->
-        Multipart.parse_form_multipart req
+        parse_form_multipart req
         >>= fun d ->
             match d with
             | {data = d; attr = _}::_ ->

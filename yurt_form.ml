@@ -1,15 +1,45 @@
-exception Invalid_multipart_form
 
 open Lwt
+open Yurt_request_ctx
+open Cohttp_lwt_unix
 
-(** The multipart Yurt_multipart module exists because Cohttp lacks server-side
- * support for parsing multipart form requests. This module may reject your legally
- * formatted requests, but I will do my best to fix all the edge cases as they come up.
- *
- * There are a couple of big things from RFC2388 that aren't implemented yet:
- *    1. multipart/mixed type multiparts are not completely parsed.
- *    2. content-transfer-encoding is currently ignored.
- *    3.*)
+exception Invalid_multipart_form
+
+(** Parse URL encoded form *)
+let parse_form_urlencoded (req : request_context) : (string, string list) Hashtbl.t Lwt.t =
+    let dst = Hashtbl.create 16 in
+    body_string req
+    >|= Uri.query_of_encoded
+    >|= Lwt_list.iter_s (fun (k, v) ->
+        Lwt.return (if Hashtbl.mem dst k then
+            let l = Hashtbl.find dst k in
+            Hashtbl.replace dst k (l @ v)
+        else
+        Hashtbl.replace dst k v))
+    >>= (fun _ -> Lwt.return dst)
+
+(** Parse URL encoded form into a Qe.expr *)
+let parse_form_urlencoded_expr (req : request_context) : Qe.expr Lwt.t =
+    parse_form_urlencoded req
+    >|= (fun f ->
+        Qe.Dict (expr_dict_of_query_dict f))
+
+let parse_form_urlencoded_table_add (ctx : Qe.context) (table_name : string) (req : request_context) : bool Lwt.t =
+    parse_form_urlencoded_expr req
+    >|= (fun f ->
+            let t = Qe_table.find_table ctx table_name in
+            Qe_table.table_add ctx t f)
+
+let parse_form_urlencoded_table_find ?limit:(limit=(-1)) (ctx : Qe.context) (table_name : string) (req : request_context) : Qe.ExprSet.t Lwt.t =
+    parse_form_urlencoded_expr req
+    >|= (fun f ->
+            let t = Qe_table.find_table ctx table_name in
+            Qe_table.table_search ctx t f limit)
+
+
+(** There are a couple of big things from RFC2388 that aren't implemented yet:
+ *    1. multipart/mixed content type may not be parsed correctly.
+ *    2. content-transfer-encoding is currently ignored. *)
 
 type multipart = {
     mutable data : string;
@@ -33,6 +63,12 @@ let is_file (m : multipart) : bool =
     match get_attr m "filename" with
     | [] -> false
     | _ -> true
+
+let is_multipart_regexp = Str.regexp "multipart/.*"
+
+let is_multipart req : bool =
+    let content_type = Yurt_util.unwrap_option_default (Yurt_header.get req "Content-Type") "" in
+    Str.string_match (is_multipart_regexp) content_type 0
 
 let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart list Lwt.t =
     (** Output *)
@@ -107,3 +143,16 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
             Buffer.add_string buffer x;
             Buffer.add_string buffer "\r\n" in Lwt.return_unit)
     >>= (fun _ -> Lwt.return !out)
+
+type form =
+    | Multipart of multipart list
+    | Urlencoded of (string, string list) Hashtbl.t
+
+(** Parse URL encoded form *)
+let parse_form (req : request_context) : form Lwt.t =
+    if is_multipart req then
+        parse_form_multipart req
+        >|= (fun f -> Multipart f)
+    else
+        parse_form_urlencoded req
+        >|= (fun f -> Urlencoded f)
