@@ -34,7 +34,7 @@ To uninstall:
     server "127.0.0.1" 1234
 
     (* Add a handler *)
-    >| get [`Path ""] (fun req ->
+    >| get "" (fun req ->
         finish_string req "Hello, World!")
 
     (* Run it *)

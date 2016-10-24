@@ -15,7 +15,7 @@ let _ =
 
     (** Reading query string value *)
     >>| (fun ctx ->
-        get "" (fun req ->
+        get "/" (fun req ->
         match query_string req "test" with
         | Some s -> finish_string req s
         | None -> finish_string req "TEST"))
