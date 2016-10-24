@@ -72,9 +72,15 @@ let make_response req =
 let resp req body : response =
     Lwt.return (make_response req, body)
 
+let finish_file ?status:(status=`OK) (req : request_context) (filename : string) : response =
+    Server.respond_file ~headers:req.response_header ~fname:filename ()
+
 (** Write a string response *)
 let finish_string ?status:(status=`OK) (req : request_context) (s : string) : response =
     Server.respond_string ~headers:req.response_header ~status:status ~body:s ()
+
+let not_found () =
+    Server.respond_not_found ()
 
 (** Write a buffer response *)
 let finish_buffer ?status:(status=`OK) (req: request_context) (s : Buffer.t) : response =
