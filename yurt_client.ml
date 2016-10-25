@@ -4,15 +4,15 @@ open Cohttp_lwt_unix
 
 open Qe_json
 
-let get ?headers url =
-    Client.get ?headers (Uri.of_string url) >>= fun (res, body) ->
+let get ?ctx ?headers url =
+    Client.get ?ctx ?headers (Uri.of_string url) >>= fun (res, body) ->
         Cohttp_lwt_body.to_string body
 
-let post ?headers ?body url =
-    Client.post ?headers (Uri.of_string url) >>= fun (res, body) ->
+let post ?ctx ?headers ?body url =
+    Client.post ?ctx ?headers (Uri.of_string url) >>= fun (res, body) ->
         Cohttp_lwt_body.to_string body
 
-let post_form ?headers ~params url =
+let post_form ?ctx ?headers ~params url =
     Client.post_form ?headers ~params (Uri.of_string url)
 
 let call ?ctx ?headers ?body meth url =
@@ -21,9 +21,9 @@ let call ?ctx ?headers ?body meth url =
 let to_json c =
     Lwt.return (Qe_json.json_of_string c)
 
-let get_json ?headers url =
-    get ?headers url >>= to_json
+let get_json ?ctx ?headers url =
+    get ?ctx ?headers url >>= to_json
 
-let post_json ?headers ?body url =
-    post ?headers ?body url >>= to_json
+let post_json ?ctx ?headers ?body url =
+    post ?ctx ?headers ?body url >>= to_json
 
