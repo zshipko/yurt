@@ -21,6 +21,9 @@ let call ?ctx ?headers ?body meth url =
 let to_json c =
     Lwt.return (Qe_json.json_of_string c)
 
+let get_json ?headers url =
+    get ?headers url >>= to_json
+
 let post_json ?headers ?body url =
     post ?headers ?body url >>= to_json
 
