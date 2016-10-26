@@ -18,6 +18,10 @@ let parse_form_urlencoded (req : request_context) : (string, string list) Hashtb
         Hashtbl.replace dst k v))
     >>= (fun _ -> Lwt.return dst)
 
+let parse_form_urlencoded_list (req : request_context) : (string * string list) list Lwt.t =
+    body_string req
+    >|= Uri.query_of_encoded
+
 (** Parse URL encoded form into a Qe.expr *)
 let parse_form_urlencoded_expr (req : request_context) : Qe.expr Lwt.t =
     parse_form_urlencoded req

@@ -16,7 +16,8 @@ let post_form ?ctx ?headers ~params url =
     Client.post_form ?headers ~params (Uri.of_string url)
 
 let call ?ctx ?headers ?body meth url =
-    Client.call ?ctx ?headers ?body meth (Uri.of_string url)
+    Client.call ?ctx ?headers ?body meth (Uri.of_string url) >>= fun (res, body) ->
+        Cohttp_lwt_body.to_string body
 
 let to_json c =
     Lwt.return (Qe_json.json_of_string c)
