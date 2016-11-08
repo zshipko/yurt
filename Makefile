@@ -2,20 +2,16 @@ flags=-I `ocamlfind query uri`,\
 	  -I `ocamlfind query conduit`,\
 	  -I `ocamlfind query lwt`,\
 	  -I `ocamlfind query cohttp.lwt`,\
-	  -I `ocamlfind query qe`
+	  -I `ocamlfind query merz` \
+	  -I `ocamlfind query irmin.unix` \
+	  -I `ocamlfind query ezjsonm`
 
 all:
 	ocamlbuild -cflags "$(flags)" yurt.cmxa yurt.cma
 
-install-qe:
-	git clone https://github.com/zshipko/qe
-	cd qe && $(MAKE) && $(MAKE) install
-
-lib.byte:
-	ocamlbuild -pkg qe -pkg cohttp.lwt yurt.cma
-
-lib.native:
-	ocamlbuild -cflags "$(flags)" yurt.cmxa
+install-merz:
+	git clone https://github.com/twomblygroup/merz
+	cd merz && $(MAKE) && $(MAKE) install
 
 install:
 	$(MAKE) uninstall || :

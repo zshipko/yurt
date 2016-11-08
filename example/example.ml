@@ -1,9 +1,9 @@
-open Qe
+open Merz
 open Lwt
 open Yurt
 
 let _ =
-    server "127.0.0.1" 1234
+    server "127.0.0.1" 8880
 
     (** Uncomment this block to configure TLS
     !> fun ctx ->
@@ -15,7 +15,7 @@ let _ =
 
     (** Reading query string value *)
     >>| (fun ctx ->
-        get "/" (fun req ->
+        get "" (fun req ->
         match query_string req "test" with
         | Some s -> finish_string req s
         | None -> finish_string req "TEST"))
@@ -26,25 +26,14 @@ let _ =
         let b = param_int req.params "b" in
         finish_string req (string_of_int (a + b)))
 
-    (** Server env *)
-    >>| (fun ctx ->
-        get "/add/<a:int>"  (fun req ->
-            let _ = Qe.run ctx.env ("a =" ^ param_string req.params "a") in
-        finish_string req "OK"))
-
-    >>| (fun ctx ->
-        get "/get/<a:string>" (fun req ->
-        let v = Qe.get ctx.env (Qe.mk_var (param_string req.params "a")) in
-        finish_string req (Qe.string_of_expr v)))
-
     (** Convert all query string arguments to json *)
     >| get "/tojson" (fun req ->
-            finish_json req (Json.json_of_expr (query_expr req)))
+            finish_json req (json_of_value (query_value req)))
 
     (** Convert all posted arguments to json, an example using the `sync` function *)
     >| post (route [`Path "tojson"]) (fun req ->
-        let p = sync (parse_form_urlencoded_expr req) in
-        let j =  Json.json_of_expr p in
+        let p = sync (parse_form_urlencoded_value req) in
+        let j =  json_of_value p in
         finish_json req j)
 
     (** Returns a single multipart item if at least one is sent *)

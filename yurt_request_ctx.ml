@@ -1,4 +1,3 @@
-
 open Lwt
 open Cohttp
 open Cohttp_lwt_unix
@@ -91,10 +90,10 @@ let finish_stream ?status:(status=`OK) (req : request_context) (s : string Lwt_s
         Server.respond ~headers:req.response_header ~status:status ~body:(Cohttp_lwt_body.of_stream s) ()
 
 (** Finish with JSON *)
-let finish_json ?status:(status=`OK) (req : request_context) (j : Qe_json.json) : response =
+let finish_json ?status:(status=`OK) (req : request_context) (j : Merz_json.json) : response =
     let open Request in
     let _ = req.response_header <- Header.replace req.response_header "Content-Type" "application/json" in
-    finish_string ~status:status req (Qe_json.string_of_json j)
+    finish_string ~status:status req (Merz_json.string_of_json j)
 
 (** Finish with HTML *)
 let finish_html ?status:(status=`OK) (req : request_context) (h : Yurt_html.t) : response =
@@ -103,9 +102,9 @@ let finish_html ?status:(status=`OK) (req : request_context) (h : Yurt_html.t) :
     finish_string ~status:status req (Yurt_html.to_string h)
 
 
-(** Convert expr to JSON and finish *)
-let finish_json_expr ?status:(status=`OK) (req : request_context) (ex : Qe.expr) : response =
-    finish_json ~status:status req (Qe_json.json_of_expr ex)
+(** Convert value to JSON and finish *)
+let finish_json_value ?status:(status=`OK) (req : request_context) (ex : Merz.value) : response =
+    finish_json ~status:status req (Merz_json.json_of_value ex)
 
 (** Write a redirect response *)
 let redirect (req : request_context) (url : string) : response =
@@ -131,20 +130,20 @@ let query_dict_of_query (q : (string * string list) list) =
             Hashtbl.replace d k (l @ v)
         else Hashtbl.replace d k v) q; d
 
-let _convert_string_if_needed (ex : Qe.expr) : Qe.expr =
+let _convert_string_if_needed (ex : Merz.value) : Merz.value =
     match ex with
-    | Qe.Var s -> Qe.mk_string s
+    | `Var s -> `String s
     | _ -> ex
 
-let expr_dict_of_query_dict (d : (string, string list) Hashtbl.t) : Qe.dict =
+let value_dict_of_query_dict (d : (string, string list) Hashtbl.t) : Merz.value Merz.dict =
     let d' = Hashtbl.create 16 in
     try
     let _ = Hashtbl.iter (fun k v ->
         let ex =  (match v with
-            | a::[] -> _convert_string_if_needed (Qe.expr_of_string a)
-            | _ -> Qe.Array (Array.of_list (List.map (fun n ->
-                _convert_string_if_needed (Qe.expr_of_string n)) v))) in
-        if Qe_json.is_valid_json ex then
+            | a::[] -> _convert_string_if_needed (Merz.value_of_string a)
+            | _ ->  `List (List.map (fun n ->
+                _convert_string_if_needed (Merz.value_of_string n)) v)) in
+        if Merz_json.is_valid_json ex then
             Hashtbl.replace d' k ex) d in d'
     with _ -> d'
 
@@ -152,10 +151,10 @@ let expr_dict_of_query_dict (d : (string, string list) Hashtbl.t) : Qe.dict =
 let query_dict (req : request_context) : (string, string list) Hashtbl.t =
     query_dict_of_query (query_all req)
 
-(** Get an Qe.Dict of query string arguments *)
-let query_expr (req : request_context) : Qe.expr =
+(** Get an Merz.Dict of query string arguments *)
+let query_value (req : request_context) : Merz.value =
     let d = query_dict req in
-    Qe.Dict (expr_dict_of_query_dict d)
+    `Dict (value_dict_of_query_dict d)
 
 (** Get a list of all query string params with the same name m*)
 let query (req : request_context) (name : string) : (string * string list) list =

@@ -22,24 +22,11 @@ let parse_form_urlencoded_list (req : request_context) : (string * string list) 
     body_string req
     >|= Uri.query_of_encoded
 
-(** Parse URL encoded form into a Qe.expr *)
-let parse_form_urlencoded_expr (req : request_context) : Qe.expr Lwt.t =
+(** Parse URL encoded form into a Merz.value *)
+let parse_form_urlencoded_value (req : request_context) : Merz.value Lwt.t =
     parse_form_urlencoded req
     >|= (fun f ->
-        Qe.Dict (expr_dict_of_query_dict f))
-
-let parse_form_urlencoded_table_add (ctx : Qe.context) (table_name : string) (req : request_context) : bool Lwt.t =
-    parse_form_urlencoded_expr req
-    >|= (fun f ->
-            let t = Qe_table.find_table ctx table_name in
-            Qe_table.table_add ctx t f)
-
-let parse_form_urlencoded_table_find ?limit:(limit=(-1)) (ctx : Qe.context) (table_name : string) (req : request_context) : Qe.ExprSet.t Lwt.t =
-    parse_form_urlencoded_expr req
-    >|= (fun f ->
-            let t = Qe_table.find_table ctx table_name in
-            Qe_table.table_search ctx t f limit)
-
+        `Dict (value_dict_of_query_dict f))
 
 (** There are a couple of big things from RFC2388 that aren't implemented yet:
  *    1. multipart/mixed content type may not be parsed correctly.

@@ -12,7 +12,7 @@ type server = {
     port : int;
     mutable routes : (string * route * endpoint) list;
     mutable tls_config : Conduit_lwt_unix.server_tls_config option;
-    mutable env : Qe.context;
+    mutable env : Merz.Store.store;
     mutable logger : Lwt_log.logger;
 }
 
@@ -25,7 +25,7 @@ let server ?tls_config:(tls_config=None) ?logger:(logger=(!Lwt_log_core.default)
         port = port;
         routes = [];
         tls_config = tls_config;
-        env = Qe.new_context ();
+        env = Merz.Store.open_db "./db";
         logger = logger;
     }
 

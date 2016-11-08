@@ -4,8 +4,8 @@
 module Body = struct
     include Cohttp_lwt_body
 
-    let of_expr (ex : Qe.expr) : t =
-        of_string (Qe.string_of_expr ex)
+    let of_value (ex : Merz.value) : t =
+        of_string (Merz.string_of_value ex)
 end
 
 (** Routing *)

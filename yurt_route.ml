@@ -122,23 +122,23 @@ let param_string (p : params) (s : string) : string =
     | `Int s | `String s | `Float s | `Match (_, s) -> s
     | _ -> raise Invalid_route_type
 
-(* Convert a route element to Qe.expr *)
-let rec expr_of_route (r : route) : Qe.expr =
+(* Convert a route element to Merz.value *)
+let rec expr_of_route (r : route) : Merz.value =
      match r with
-        | `Int i -> Qe.Int (Int64.of_string i)
-        | `Float i -> Qe.mk_float (float_of_string i)
-        | `String "true" -> Qe.mk_bool true
-        | `String "false" -> Qe.mk_bool false
-        | `String i -> Qe.mk_string i
-        | `Path i -> Qe.mk_string i
-        | `Match (name, i) -> Qe.mk_string i
-        | `Route i -> Qe.mk_array (List.map expr_of_route i)
+        | `Int i -> `Int (Int64.of_string i)
+        | `Float i -> `Float (float_of_string i)
+        | `String "true" -> Merz.mk_bool true
+        | `String "false" -> Merz.mk_bool false
+        | `String i -> `String i
+        | `Path i -> `String i
+        | `Match (name, i) -> `String i
+        | `Route i ->  `List (List.map expr_of_route i)
 
-(* Convert params to Qe.expr *)
-let expr_of_params (p : params) : Qe.expr =
+(* Convert params to Merz.value *)
+let expr_of_params (p : params) : Merz.value =
     let dst = Hashtbl.create (Hashtbl.length p) in
     Hashtbl.iter (fun k v ->
-        Hashtbl.replace dst k (expr_of_route v)) p; Qe.Dict dst
+        Hashtbl.replace dst k (expr_of_route v)) p; `Dict dst
 
 
 

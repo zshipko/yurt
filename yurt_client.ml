@@ -2,7 +2,7 @@ open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 
-open Qe_json
+open Merz_json
 
 let get ?ctx ?headers url =
     Client.get ?ctx ?headers (Uri.of_string url) >>= fun (res, body) ->
@@ -20,7 +20,7 @@ let call ?ctx ?headers ?body meth url =
         Cohttp_lwt_body.to_string body
 
 let to_json c =
-    Lwt.return (Qe_json.json_of_string c)
+    Lwt.return (Merz_json.json_of_string c)
 
 let get_json ?ctx ?headers url =
     get ?ctx ?headers url >>= to_json
