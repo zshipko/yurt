@@ -8,7 +8,7 @@ flags=-I `ocamlfind query uri`,\
 	  -I `ocamlfind query ocamlgraph`
 
 all:
-	ocamlbuild -cflags "$(flags)" yurt.cmxa yurt.cma
+	ocamlbuild -cflags "$(flags)" lib/yurt.cmxa lib/yurt.cma
 
 install-merz:
 	git clone https://github.com/twomblygroup/merz
@@ -16,7 +16,7 @@ install-merz:
 
 install:
 	$(MAKE) uninstall || :
-	cd _build && ocamlfind install yurt ../META yurt.cmxa yurt.cma *.cmx *.cmo *.cmi yurt.a
+	cd _build/lib && ocamlfind install yurt ../../META yurt.cmxa yurt.cma *.cmx *.cmo *.cmi yurt.a
 	rm -rf example/_build
 
 uninstall:

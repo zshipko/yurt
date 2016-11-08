@@ -9,8 +9,3 @@ _build
 *.swp
 *.native
 *.byte
-bin
-lib
-parser2.ml
-parser2.mli
-lexer.ml
