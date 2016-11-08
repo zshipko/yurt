@@ -4,7 +4,8 @@ flags=-I `ocamlfind query uri`,\
 	  -I `ocamlfind query cohttp.lwt`,\
 	  -I `ocamlfind query merz` \
 	  -I `ocamlfind query irmin.unix` \
-	  -I `ocamlfind query ezjsonm`
+	  -I `ocamlfind query ezjsonm` \
+	  -I `ocamlfind query ocamlgraph`
 
 all:
 	ocamlbuild -cflags "$(flags)" yurt.cmxa yurt.cma
