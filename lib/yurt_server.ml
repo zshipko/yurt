@@ -7,16 +7,13 @@ open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 
-module Make (S : Irmin.S) = struct
-
-    module Storage = Merz_store.Make(S)
-
+module Make (X : Merz_store.Store_type) = struct
     type server = {
         host : string;
         port : int;
         mutable routes : (string * route * endpoint) list;
         mutable tls_config : Conduit_lwt_unix.server_tls_config option;
-        mutable env : Storage.store;
+        mutable env : X.store;
         mutable logger : Lwt_log.logger;
     }
 
@@ -29,7 +26,7 @@ module Make (S : Irmin.S) = struct
             port = port;
             routes = [];
             tls_config = tls_config;
-            env = Storage.open_db "./db";
+            env = X.open_db ();
             logger = logger;
         }
 
@@ -173,5 +170,5 @@ module Make (S : Irmin.S) = struct
 
 end
 
-module Mem = Make(Merz.MemStore.T)
-include Make(Merz.Store.T)
+module Mem = Make(Merz.MemStore)
+include Make(Merz.Store)
