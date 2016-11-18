@@ -137,8 +137,8 @@ module Make (X : Merz_store.Store_type) = struct
     exception Cannot_start_server
 
     (** Start a configured server with attached endpoints *)
-    let run_server (s : server) =
-        Lwt_main.run (match s.tls_config with
+    let start (s : server) =
+        match s.tls_config with
         | Some config ->
             Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:(Some (tls_server_key_of_config config)) ()
             >>= (fun ctx ->
@@ -148,27 +148,28 @@ module Make (X : Merz_store.Store_type) = struct
             Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:None ()
             >>= (fun ctx ->
                 let ctx' = Cohttp_lwt_unix_net.init ?ctx:(Some ctx) () in
-                create s (Server.create ~mode:(`TCP (`Port s.port)) ~ctx:ctx')))
+                create s (Server.create ~mode:(`TCP (`Port s.port)) ~ctx:ctx'))
 
-    let run_auto_restart (s : server) =
-        while true do
-            run_server s
-        done
+    let rec start_auto_restart (s : server) =
+        Lwt.catch (fun () -> start s)
+        (fun exc -> start_auto_restart s)
 
-    let run_fork_auto_restart (s : server) =
-        while true do
-        match Lwt_unix.fork () with
-        | -1 -> raise Cannot_start_server
-        | 0 ->
-            run_server s;
-            exit 0
-        | n ->
-            let _ = Lwt_main.run (Lwt_unix.waitpid [] n) in ()
-        done
+    let run ?fn:(fn=start_auto_restart) s =
+        Unix.handle_unix_error Lwt_main.run (fn s)
 
-    let run = run_fork_auto_restart
+    (** Add a handler *)
+    let (>|) (s : server) (fn :  server -> server ) : server =
+        fn s
+
+    (** Add a handler function that takes the server as a single argument *)
+    let (>>|) (s : server) (fn : server -> server -> server) : server =
+        fn s s
+
+    (** Run a function that returns unit in the handler definition chain *)
+    let (>||) (s : server) (fn : server -> unit) : server =
+        fn s; s
 
 end
 
-module Mem = Make(Merz.MemStore)
-include Make(Merz.Store)
+module Mem = Make(Merz.Memory)
+include Make(Merz.Disk)

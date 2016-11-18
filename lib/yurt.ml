@@ -25,15 +25,3 @@ include Form
 (** Convert a route-string to route type *)
 let route a =
     Route.string_of_route (`Route a)
-
-(** Add a handler *)
-let (>|) (s : server) (fn :  server -> server ) : server =
-    fn s
-
-(** Add a handler function that takes the server as a single argument *)
-let (>>|) (s : server) (fn : server -> server -> server) : server =
-    fn s s
-
-(** Run a function that returns unit in the handler definition chain *)
-let (>||) (s : server) (fn : server -> unit) : server =
-    fn s; s
