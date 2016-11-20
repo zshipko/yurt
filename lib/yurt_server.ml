@@ -155,7 +155,8 @@ module Make (X : Merz_store.Store_type) = struct
         (fun exc -> start_auto_restart s)
 
     let run ?fn:(fn=start_auto_restart) s =
-        Unix.handle_unix_error Lwt_main.run (fn s)
+         try Lwt_main.run (fn s)
+         with _ -> ()
 
     (** Add a handler *)
     let (>|) (s : server) (fn :  server -> server ) : server =
