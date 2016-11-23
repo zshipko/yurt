@@ -27,7 +27,7 @@ let rec make_request_context c r b p =
         body = Cohttp_lwt_body.to_stream b;
         params = p;
         status = Some `OK;
-        response_header = Header.init ();
+        response_header = Header.init ()
     }
 
 (** Block and get the contents of a `body` (stream) *)

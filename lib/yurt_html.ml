@@ -333,6 +333,10 @@ let opt ?attr:(attr=[]) (s : string) =
 let form ?attr:(attr=[]) children =
     tag ~attr:attr ~children:children `FORM
 
+let mk_form ?attr attrs submit_text =
+    form ?attr ((List.map (fun a ->
+        input a) attrs) @ [input ["type", "submit"; "value", submit_text]])
+
 let audio ?attr:(attr=[]) ?content children =
     tag ~attr:attr ~content:content ~children:children `AUDIO
 

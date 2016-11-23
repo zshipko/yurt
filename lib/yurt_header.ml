@@ -22,6 +22,12 @@ let cookies (req : request_context) =
     let open Request in
     Cookie.Cookie_hdr.extract Request.(req.r.headers)
 
+(** Find a cookie by name *)
+let find_cookie (req : request_context) name =
+    List.fold_left (fun acc (k, v) ->
+        if k = name then Some v
+        else acc) None (cookies req)
+
 (** Create header *)
 let create = Header.init
 
@@ -47,16 +53,15 @@ let remove (req : request_context) (key : string) =
 
 let content_type (req : request_context) =
     H.get_media_type Request.(req.r.headers)
+
 let location (req : request_context) =
     H.get_location Request.(req.r.headers)
+
 let set_auth (req : request_context) s =
     req.response_header <- H.add_authorization_req req.response_header s
 
 let auth (req : request_context) =
-    match H.get_authorization Request.(req.r.headers) with
-    | Some (`Basic (user, pass)) -> (user, pass)
-    | Some (`Other user) -> (user, "")
-    | None -> ("", "")
+    H.get_authorization Request.(req.r.headers)
 
 let is_form (req : request_context) =
     H.is_form Request.(req.r.headers)
