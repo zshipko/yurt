@@ -374,3 +374,18 @@ and to_string (node : t) : string =
     | _ when List.mem node.tag Tag.nonclosing ->
         "<" ^ tag ^ string_of_attrs node ^ " />"
     | _ -> "<" ^ tag ^ string_of_attrs node ^ ">" ^ string_of_content node ^ string_of_children node ^ "</" ^ tag ^ ">"
+
+let templates : (string, t) Hashtbl.t = Hashtbl.create 16
+
+let template_exists name =
+    Hashtbl.mem templates name
+
+let get_template name =
+    Hashtbl.find templates name
+
+let set_template name tmpl =
+    Hashtbl.replace templates name tmpl
+
+(** Loading compiled templates *)
+let loadfile filename =
+    Dynlink.loadfile filename

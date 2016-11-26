@@ -41,8 +41,8 @@ let _ =
         parse_form_multipart req
         >>= fun d ->
             match d with
-            | {data = d; attr = _}::_ ->
-                finish_string req d
+            | {data = d; attr = a; name = s}::_ ->
+                finish_string req (s ^ ": " ^ d)
             | [] -> finish_string req "ERROR")
 
     (* Uncomment this to daemonize the process

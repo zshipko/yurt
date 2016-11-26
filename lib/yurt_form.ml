@@ -114,17 +114,20 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
                     let _end = Str.match_end () in
                     let rec _inner d i =
                         (* Attribute key *)
-                        let k = Str.matched_group i x in
+                        let k = String.trim (Str.matched_group i x) in
 
                         (* Attribute value *)
                         let v = Str.matched_group (i + 1) x in
 
                         (* Set name *)
-                        if k = "name" then !current.name <- k;
-                        try
-                            let x = Hashtbl.find d k in
-                            Hashtbl.replace d k (x @ [v])
-                        with Not_found -> Hashtbl.replace d k [v];
+                        let _ = if k = "name" then
+                            !current.name <- v
+                        else
+                            try
+                                let x = Hashtbl.find d k in
+                                Hashtbl.replace d k (x @ [v])
+                            with Not_found -> Hashtbl.replace d k [v] in
+
                         if Str.group_end i < _end then
                             _inner d (i + 2)
                     in (try _inner !current.attr 1
