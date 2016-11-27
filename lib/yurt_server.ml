@@ -7,26 +7,26 @@ open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 
-module Make (X : Merz_store.Store_type) = struct
+module MakeYurt (X : Merz_store.STORE) = struct
     type server = {
         host : string;
         port : int;
         mutable routes : (string * route * endpoint) list;
         mutable tls_config : Conduit_lwt_unix.server_tls_config option;
-        mutable env : X.store;
+        mutable db : X.store;
         mutable logger : Lwt_log.logger;
     }
 
     let tls_server_key_of_config (crt, key, pass, _) =
         `TLS (crt, key, pass)
 
-    let server ?tls_config:(tls_config=None) ?logger:(logger=(!Lwt_log_core.default)) (host : string) (port : int) : server =
+    let server ?tls_config:(tls_config=None) ?logger:(logger=(!Lwt_log_core.default)) ?root (host : string) (port : int) : server =
         {
             host = host;
             port = port;
             routes = [];
             tls_config = tls_config;
-            env = X.open_db ();
+            db = X.open_db ?root ();
             logger = logger;
         }
 
@@ -172,5 +172,5 @@ module Make (X : Merz_store.Store_type) = struct
 
 end
 
-module Mem = Make(Merz.Memory)
-include Make(Merz.Disk)
+module MemServer = MakeYurt (Merz.Memory)
+module DiskServer = MakeYurt (Merz.Disk)

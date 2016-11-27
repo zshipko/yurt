@@ -1,6 +1,7 @@
 open Merz
 open Lwt
 open Yurt
+open Yurt.DiskServer
 
 let _ =
     server "127.0.0.1" 8880
