@@ -7,7 +7,7 @@ open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 
-module MakeYurt (X : Merz_store.STORE) = struct
+module MakeYurt (X : Merz_eval.EVAL) = struct
     type server = {
         host : string;
         port : int;
@@ -172,5 +172,5 @@ module MakeYurt (X : Merz_store.STORE) = struct
 
 end
 
-module MemServer = MakeYurt (Merz.Memory)
-module DiskServer = MakeYurt (Merz.Disk)
+module MemServer = MakeYurt (Merz.MemoryCtx)
+module DiskServer = MakeYurt (Merz.DiskCtx)
