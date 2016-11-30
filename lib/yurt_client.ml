@@ -9,7 +9,7 @@ let get ?ctx ?headers url =
         Cohttp_lwt_body.to_string body
 
 let post ?ctx ?headers ?body url =
-    Client.post ?ctx ?headers (Uri.of_string url) >>= fun (res, body) ->
+    Client.post ?ctx ?headers ?body (Uri.of_string url) >>= fun (res, body) ->
         Cohttp_lwt_body.to_string body
 
 let post_form ?ctx ?headers ~params url =
