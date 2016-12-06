@@ -9,22 +9,23 @@ let get ?ctx ?headers url =
         Cohttp_lwt_body.to_string body
 
 let post ?ctx ?headers ?body url =
-    Client.post ?ctx ?headers (Uri.of_string url) >>= fun (res, body) ->
+    Client.post ?ctx ?headers ?body (Uri.of_string url) >>= fun (res, body) ->
         Cohttp_lwt_body.to_string body
 
 let post_form ?ctx ?headers ~params url =
-    Client.post_form ?headers ~params (Uri.of_string url)
+    Client.post_form ?ctx ?headers ~params (Uri.of_string url) >>= fun (res, body) ->
+        Cohttp_lwt_body.to_string body
 
 let call ?ctx ?headers ?body meth url =
     Client.call ?ctx ?headers ?body meth (Uri.of_string url) >>= fun (res, body) ->
         Cohttp_lwt_body.to_string body
 
-let to_json c =
-    Lwt.return (Merz_json.json_of_string c)
-
 let get_json ?ctx ?headers url =
-    get ?ctx ?headers url >>= to_json
+    get ?ctx ?headers url >|= Merz_json.json_of_string
 
 let post_json ?ctx ?headers ?body url =
-    post ?ctx ?headers ?body url >>= to_json
+    post ?ctx ?headers ?body url >|= Merz_json.json_of_string
+
+let post_form_json ?ctx ?headers ?params:(params=[]) url =
+    post_form ?ctx ?headers ~params url >|= Merz_json.json_of_string
 
