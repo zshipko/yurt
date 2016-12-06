@@ -172,5 +172,5 @@ module MakeYurt (X : Merz_eval.EVAL) = struct
 
 end
 
-module MemServer = MakeYurt (Merz.MemoryCtx)
+module MemoryServer = MakeYurt (Merz.MemoryCtx)
 module DiskServer = MakeYurt (Merz.DiskCtx)
