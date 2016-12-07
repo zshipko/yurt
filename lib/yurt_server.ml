@@ -95,6 +95,9 @@ module MakeYurt (X : Merz_eval.EVAL) = struct
     let redirect_path (s : server) (req : request_context) (p : string) : response =
         Server.respond_redirect ~headers:req.response_header ~uri:(Uri.of_string (path s [p])) ()
 
+    let options (r : string) (ep : endpoint) (s : server) =
+        register_route_string s "OPTIONS" r ep
+
     let get (r : string) (ep : endpoint) (s : server) =
         register_route_string s "GET" r ep
 
