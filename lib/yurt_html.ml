@@ -248,8 +248,14 @@ let canvas ?content attr =
 let style ?attr:(attr=[]) content =
     tag ~attr:attr ~content:(Some content) `STYLE
 
+let iframe attr =
+    tag ~attr:attr `IFRAME
+
 let div ?attr:(attr=[]) ?content children =
     tag ~attr:attr ~content:content ~children:children `DIV
+
+let p ?attr:(attr=[]) ?children:(children=[]) content =
+    tag ~attr:attr ~content:(Some content) ~children:children `P
 
 let span ?attr:(attr=[]) ?content children =
     tag ~attr:attr ~content:content ~children:children `SPAN
