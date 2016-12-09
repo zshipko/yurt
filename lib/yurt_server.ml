@@ -20,7 +20,7 @@ module MakeYurt (X : Merz_eval.EVAL) = struct
     let tls_server_key_of_config (crt, key, pass, _) =
         `TLS (crt, key, pass)
 
-    let server ?tls_config:(tls_config=None) ?logger:(logger=(!Lwt_log_core.default)) ?root (host : string) (port : int) : server =
+    let server ?tls_config ?logger:(logger=(!Lwt_log_core.default)) ?root (host : string) (port : int) : server =
         {
             host = host;
             port = port;

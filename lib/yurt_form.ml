@@ -11,11 +11,12 @@ let parse_form_urlencoded (req : request_context) : (string, string list) Hashtb
     body_string req
     >|= Uri.query_of_encoded
     >|= Lwt_list.iter_s (fun (k, v) ->
-        Lwt.return (if Hashtbl.mem dst k then
+        Lwt.return (
+            if Hashtbl.mem dst k then
             let l = Hashtbl.find dst k in
             Hashtbl.replace dst k (l @ v)
         else
-        Hashtbl.replace dst k v))
+            Hashtbl.replace dst k v))
     >>= (fun _ -> Lwt.return dst)
 
 let parse_form_urlencoded_list (req : request_context) : (string * string list) list Lwt.t =
