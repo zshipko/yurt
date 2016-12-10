@@ -7,26 +7,83 @@ open Lwt
 open Cohttp
 open Cohttp_lwt_unix
 
-module MakeYurt (X : Merz_eval.EVAL) = struct
+module type YURT_SERVER = sig
+    include Merz_eval.EVAL
+
     type server = {
         host : string;
         port : int;
         mutable routes : (string * route * endpoint) list;
         mutable tls_config : Conduit_lwt_unix.server_tls_config option;
-        mutable db : X.store;
+        mutable db : Store.t;
+        mutable logger : Lwt_log.logger;
+    }
+
+    val server : ?tls_config:Conduit_lwt_unix.server_tls_config option ->
+        ?logger:Lwt_log.logger -> ?root:string -> string -> int -> server
+
+    val log_debug : server -> string -> string -> unit
+    val log_info : server -> string -> string -> unit
+    val log_notice : server -> string -> string -> unit
+    val log_warning : server -> string -> string -> unit
+    val log_error : server -> string -> string -> unit
+    val log_fatal : server -> string -> string -> unit
+
+    val configure_tls : ?password:[`Password of bool -> string | `No_password] -> server -> string -> string -> server
+
+    val path : server -> string list -> string
+
+    val register_routes : server -> (string * route * endpoint) list -> server
+    val register_route_string : server -> string -> string -> endpoint -> server
+    val register_route : server -> string -> route -> endpoint -> server
+    val register_static_file_route : ?ext:string list -> server -> string -> string -> server
+    val register_single_file_route : ?content_type:string -> server -> string -> string -> server
+
+    val redirect_path : server -> request_context -> string -> response
+
+    val get : string -> endpoint -> server -> server
+    val post : string -> endpoint -> server -> server
+    val put : string -> endpoint -> server -> server
+    val update : string -> endpoint -> server -> server
+    val delete : string -> endpoint -> server -> server
+    val options : string -> endpoint -> server -> server
+    val static : string -> string -> server -> server
+    val file : string -> string -> server -> server
+
+    val daemonize : ?directory:string -> ?syslog:bool -> server -> unit
+
+    exception Cannot_start_server
+
+    val start : server -> unit Lwt.t
+    val start_auto_restart : server -> unit Lwt.t
+    val run : ?fn:(server -> unit Lwt.t) -> server -> unit
+    val (>|) : server -> (server -> server) -> server
+    val (>>|) : server -> (server -> server -> server) -> server
+    val (>||) : server -> (server -> unit) -> server
+end
+
+module MakeYurt (X : Merz_eval.EVAL) : YURT_SERVER = struct
+    include X
+
+    type server = {
+        host : string;
+        port : int;
+        mutable routes : (string * route * endpoint) list;
+        mutable tls_config : Conduit_lwt_unix.server_tls_config option;
+        mutable db : Store.t;
         mutable logger : Lwt_log.logger;
     }
 
     let tls_server_key_of_config (crt, key, pass, _) =
         `TLS (crt, key, pass)
 
-    let server ?tls_config:(tls_config=None) ?logger:(logger=(!Lwt_log_core.default)) ?root (host : string) (port : int) : server =
+    let server ?tls_config:(tls_config=None) ?logger:(logger=(!Lwt_log.default)) ?root (host : string) (port : int) : server =
         {
             host = host;
             port = port;
             routes = [];
             tls_config = tls_config;
-            db = X.open_db ?root ();
+            db = Store.open_db ?root ();
             logger = logger;
         }
 
@@ -34,23 +91,23 @@ module MakeYurt (X : Merz_eval.EVAL) = struct
 
      (* Logging *)
 
-     let log_debug (s : server) section =
-         Lwt_log.ign_debug ~section:(Lwt_log.Section.make section)  ~logger:s.logger
+     let log_debug (s : server) section msg =
+         Lwt_log.ign_debug ~section:(Lwt_log.Section.make section)  ~logger:s.logger msg
 
-     let log_info (s : server) section =
-         Lwt_log.ign_info ~section:(Lwt_log.Section.make section) ~logger:s.logger
+     let log_info (s : server) section msg =
+         Lwt_log.ign_info ~section:(Lwt_log.Section.make section) ~logger:s.logger msg
 
-     let log_notice (s : server) section =
-         Lwt_log.ign_notice ~section:(Lwt_log.Section.make section) ~logger:s.logger
+     let log_notice (s : server) section msg =
+         Lwt_log.ign_notice ~section:(Lwt_log.Section.make section) ~logger:s.logger msg
 
-     let log_warning (s : server) section =
-         Lwt_log.ign_warning  ~section:(Lwt_log.Section.make section) ~logger:s.logger
+     let log_warning (s : server) section msg =
+         Lwt_log.ign_warning  ~section:(Lwt_log.Section.make section) ~logger:s.logger msg
 
-     let log_error (s : server) section =
-         Lwt_log.ign_error ~section:(Lwt_log.Section.make section) ~logger:s.logger
+     let log_error (s : server) section msg =
+         Lwt_log.ign_error ~section:(Lwt_log.Section.make section) ~logger:s.logger msg
 
-     let log_fatal (s : server) section =
-         Lwt_log.ign_fatal ~section:(Lwt_log.Section.make section) ~logger:s.logger
+     let log_fatal (s : server) section msg =
+         Lwt_log.ign_fatal ~section:(Lwt_log.Section.make section) ~logger:s.logger msg
 
     (** Configure TLS for server *)
     let configure_tls ?password:(password=`No_password) (s : server) (crt_file : string) (key_file : string) : server =
@@ -110,6 +167,9 @@ module MakeYurt (X : Merz_eval.EVAL) = struct
     let delete (r : string) (ep : endpoint) (s : server) =
         register_route_string s "DELETE" r ep
 
+    let options (r : string) (ep : endpoint) (s : server) =
+        register_route_string s "OPTIONS" r ep
+
     let static (p : string) (r : string) (s : server) =
         register_static_file_route s p r
 
@@ -131,8 +191,8 @@ module MakeYurt (X : Merz_eval.EVAL) = struct
         srv (Server.make ~callback ())
 
     (** Run as daemon *)
-    let daemonize (s : server) =
-        Lwt_daemon.daemonize ~stdin:`Close ~stdout:(`Log s.logger) ~stderr:(`Log s.logger)
+    let daemonize ?directory ?syslog (s : server) =
+        Lwt_daemon.daemonize ~stdin:`Close ~stdout:(`Log s.logger) ~stderr:(`Log s.logger) ?directory ?syslog ()
 
     exception Cannot_start_server
 
