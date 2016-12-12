@@ -34,7 +34,7 @@ let parse_form_urlencoded_value (req : request_context) : Merz.value Lwt.t =
  *    2. content-transfer-encoding is currently ignored. *)
 
 type multipart = {
-    mutable data : string Lwt_stream.t;
+    mutable data : char Lwt_stream.t;
     mutable name : string;
     attr : (string, string list) Hashtbl.t
 }
@@ -76,8 +76,7 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
     let boundary_b = boundary_a ^ "--" in
 
     (* Current multipart context *)
-    let stream = ref (Lwt_stream.create ()) in
-    let current = ref {data = fst !stream; attr = Hashtbl.create 16; name = ""} in
+    let current = ref {data = Lwt_stream.of_string ""; attr = Hashtbl.create 16; name = ""} in
 
     (* Body buffer *)
     let buffer = Buffer.create 512 in
@@ -101,11 +100,10 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
                Hashtbl.length c.attr > 0 then
                 (** The new buffer contains an extra "\r\n" that needs to be removed *)
                 let b = Buffer.sub buffer 0 (bl - 2) in
-                let _ = (snd (!stream)) (Some b) in
+                let _ = !current.data <- Lwt_stream.of_string b in
                 let _ = Buffer.reset buffer in
                 let _ = out := !out @ [c] in
-                let _ = stream := Lwt_stream.create () in
-                current := {data = fst (!stream); attr = c.attr; name = ""}
+                current := {data = Lwt_stream.of_string ""; attr = c.attr; name = ""}
 
         (* End of header *)
         | x when !in_header && x = "" ->
