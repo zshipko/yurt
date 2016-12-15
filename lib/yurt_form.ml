@@ -113,7 +113,7 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
         | x when !in_header ->
             let m = "Content-Disposition: form-data; " in
             let mlen = String.length m in
-            if String.sub x 0 mlen = m then
+            if String.length x >= String.length m && String.sub x 0 mlen = m then
                 let x = String.sub x mlen (String.length x - String.length m) in
                 let parts = split_semicolon x in
                 List.iter (fun part ->
