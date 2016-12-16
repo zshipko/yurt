@@ -1,6 +1,6 @@
 name="yurt"
 description="HTTP microframework"
 version="0.1"
-requires="threads,str,cohttp.lwt,merz"
+requires="threads str cohttp.lwt merz dynlink"
 archive(native)="yurt.cmxa"
 archive(byte)="yurt.cma"

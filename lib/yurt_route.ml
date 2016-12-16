@@ -1,5 +1,8 @@
 exception Invalid_route_type
 
+open Merz.Value
+open Merz.Util
+
 (** The `Route module hlps with building routes *)
 
 (** The route type allows for URL routes to be built using strong types *)
@@ -123,22 +126,24 @@ let param_string (p : params) (s : string) : string =
     | _ -> raise Invalid_route_type
 
 (* Convert a route element to Merz.value *)
-let rec expr_of_route (r : route) : Merz.value =
+let rec value_of_route (r : route) : Merz.value =
      match r with
-        | `Int i -> `Int (Int64.of_string i)
-        | `Float i -> `Float (float_of_string i)
-        | `String "true" -> Merz.mk_bool true
-        | `String "false" -> Merz.mk_bool false
-        | `String i -> `String i
-        | `Path i -> `String i
-        | `Match (name, i) -> `String i
-        | `Route i ->  `List (List.map expr_of_route i)
+        | `Int i -> Int (Int64.of_string i)
+        | `Float i -> Float (float_of_string i)
+        | `String "true" -> Merz._true
+        | `String "false" -> Merz._false
+        | `String i -> String i
+        | `Path i -> String i
+        | `Match (name, i) -> String i
+        | `Route i ->  List (List.map value_of_route i)
 
 (* Convert params to Merz.value *)
-let expr_of_params (p : params) : Merz.value =
-    let dst = Hashtbl.create (Hashtbl.length p) in
-    Hashtbl.iter (fun k v ->
-        Hashtbl.replace dst k (expr_of_route v)) p; `Dict dst
+let value_of_params (p : params) : Merz.value =
+    let dst = Dict.empty in
+    let dst = Hashtbl.fold (fun k v acc ->
+        Dict.add k (value_of_route v) acc) p dst in
+    Dict dst
+
 
 
 

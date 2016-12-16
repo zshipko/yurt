@@ -3,6 +3,7 @@ open Cohttp
 open Cohttp_lwt_unix
 
 open Yurt_route
+open Merz.Util
 
 type request_context = {
     conn : Server.conn;
@@ -132,20 +133,17 @@ let query_dict_of_query (q : (string * string list) list) =
 
 let _convert_string_if_needed (ex : Merz.value) : Merz.value =
     match ex with
-    | `Var s -> `String s
+    | Merz.Var s -> Merz.String s
     | _ -> ex
 
-let value_dict_of_query_dict (d : (string, string list) Hashtbl.t) : Merz.value Merz.dict =
-    let d' = Hashtbl.create 16 in
-    try
-    let _ = Hashtbl.iter (fun k v ->
+let value_dict_of_query_dict (d : (string, string list) Hashtbl.t) : Merz.value Dict.t =
+    let d' = Dict.empty in
+    Hashtbl.fold (fun k v acc ->
         let ex =  (match v with
             | a::[] -> _convert_string_if_needed (Merz.value_of_string a)
-            | _ ->  `List (List.map (fun n ->
+            | _ ->  Merz.List (List.map (fun n ->
                 _convert_string_if_needed (Merz.value_of_string n)) v)) in
-        if Merz_json.is_valid_json ex then
-            Hashtbl.replace d' k ex) d in d'
-    with _ -> d'
+            Dict.add k ex acc) d d'
 
 (** Get a hashtable of all query string parameters *)
 let query_dict (req : request_context) : (string, string list) Hashtbl.t =
@@ -154,7 +152,7 @@ let query_dict (req : request_context) : (string, string list) Hashtbl.t =
 (** Get an Merz.Dict of query string arguments *)
 let query_value (req : request_context) : Merz.value =
     let d = query_dict req in
-    `Dict (value_dict_of_query_dict d)
+    Merz.Dict (value_dict_of_query_dict d)
 
 (** Get a list of all query string params with the same name m*)
 let query (req : request_context) (name : string) : (string * string list) list =

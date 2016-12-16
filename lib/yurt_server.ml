@@ -8,7 +8,7 @@ open Cohttp
 open Cohttp_lwt_unix
 
 module type YURT_SERVER = sig
-    include Merz_eval.EVAL
+    include Merz_query.QUERY
 
     type server = {
         host : string;
@@ -62,7 +62,7 @@ module type YURT_SERVER = sig
     val (>||) : server -> (server -> unit) -> server
 end
 
-module MakeYurt (X : Merz_eval.EVAL) : YURT_SERVER = struct
+module MakeYurt (X : Merz_query.QUERY) : YURT_SERVER = struct
     include X
 
     type server = {
@@ -235,5 +235,5 @@ module MakeYurt (X : Merz_eval.EVAL) : YURT_SERVER = struct
 
 end
 
-module MemoryServer = MakeYurt (Merz.MemoryCtx)
-module DiskServer = MakeYurt (Merz.DiskCtx)
+module MemoryServer = MakeYurt (Merz.Query.Memory)
+module DiskServer = MakeYurt (Merz.Query.Disk)

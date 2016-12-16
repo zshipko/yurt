@@ -3,6 +3,8 @@ open Lwt
 open Yurt_request_ctx
 open Cohttp_lwt_unix
 
+open Merz
+
 exception Invalid_multipart_form
 
 (** Parse URL encoded form *)
@@ -27,7 +29,7 @@ let parse_form_urlencoded_list (req : request_context) : (string * string list) 
 let parse_form_urlencoded_value (req : request_context) : Merz.value Lwt.t =
     parse_form_urlencoded req
     >|= (fun f ->
-        `Dict (value_dict_of_query_dict f))
+        Dict (value_dict_of_query_dict f))
 
 (** There are a couple of big things from RFC2388 that aren't implemented yet:
  *    1. multipart/mixed content type may not be parsed correctly.
