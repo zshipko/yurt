@@ -36,13 +36,13 @@ let parse_form_urlencoded_value (req : request_context) : Merz.value Lwt.t =
  *    2. content-transfer-encoding is currently ignored. *)
 
 type multipart = {
-    mutable data : string;
+    mutable data : char Lwt_stream.t;
     mutable name : string;
     attr : (string, string list) Hashtbl.t
 }
 
 let line_regexp = Str.regexp "\r\n"
-let kv_regexp = Str.regexp "\\([^=]*\\)=\"\\([^;]*\\)\";?"
+let equal_regexp = Str.regexp "="
 let semicolon_regexp = Str.regexp "; ?"
 
 let split_semicolon (s : string) : string list =
@@ -78,7 +78,7 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
     let boundary_b = boundary_a ^ "--" in
 
     (* Current multipart context *)
-    let current = ref {data = ""; attr = Hashtbl.create 16; name = ""} in
+    let current = ref {data = Lwt_stream.of_string ""; attr = Hashtbl.create 16; name = ""} in
 
     (* Body buffer *)
     let buffer = Buffer.create 512 in
@@ -101,10 +101,11 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
             if bl > 0 ||
                Hashtbl.length c.attr > 0 then
                 (** The new buffer contains an extra "\r\n" that needs to be removed *)
-                let _ = c.data <- Buffer.sub buffer 0 (bl - 2) in
+                let b = Buffer.sub buffer 0 (bl - 2) in
+                let _ = !current.data <- Lwt_stream.of_string b in
                 let _ = Buffer.reset buffer in
                 let _ = out := !out @ [c] in
-                current := {data = ""; attr = Hashtbl.create 16; name = ""}
+                current := {data = Lwt_stream.of_string ""; attr = c.attr; name = ""}
 
         (* End of header *)
         | x when !in_header && x = "" ->
@@ -112,29 +113,25 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
 
         (* Get attributes  *)
         | x when !in_header ->
-            if try String.sub x 0 32 = "Content-Disposition: form-data; " with _ -> false then
-                if Str.string_match kv_regexp x 31 then
-                    let _end = Str.match_end () in
-                    let rec _inner d i =
-                        (* Attribute key *)
-                        let k = String.trim (Str.matched_group i x) in
-
-                        (* Attribute value *)
-                        let v = Str.matched_group (i + 1) x in
-
-                        (* Set name *)
-                        let _ = if k = "name" then
-                            !current.name <- v
+            let m = "Content-Disposition: form-data; " in
+            let mlen = String.length m in
+            if String.length x >= String.length m && String.sub x 0 mlen = m then
+                let x = String.sub x mlen (String.length x - String.length m) in
+                let parts = split_semicolon x in
+                List.iter (fun part ->
+                    let p = Str.split equal_regexp part in
+                    let k = String.trim (List.hd p) in
+                    let v = List.tl p |> String.concat "=" in
+                    let v = String.sub v 1 (String.length v - 2) in
+                    if k == "name" then
+                        !current.name <- v
+                    else
+                        if Hashtbl.mem !current.attr k then
+                            let dst = Hashtbl.find !current.attr k in
+                            Hashtbl.replace !current.attr k (dst @ [v])
                         else
-                            try
-                                let x = Hashtbl.find d k in
-                                Hashtbl.replace d k (x @ [v])
-                            with Not_found -> Hashtbl.replace d k [v] in
+                            Hashtbl.replace !current.attr k [v]) parts
 
-                        if Str.group_end i < _end then
-                            _inner d (i + 2)
-                    in (try _inner !current.attr 1
-                       with _ -> ())
         (* In body *)
         | x ->
             Buffer.add_string buffer x;
