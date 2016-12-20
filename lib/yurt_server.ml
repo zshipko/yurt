@@ -237,3 +237,4 @@ end
 
 module MemoryServer = MakeYurt (Merz.Query.Memory)
 module DiskServer = MakeYurt (Merz.Query.Disk)
+module GitServer = MakeYurt(Merz.Query.Git)
