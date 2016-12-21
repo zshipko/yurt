@@ -105,10 +105,10 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
                 let _ = !current.data <- Lwt_stream.of_string b in
                 let _ = Buffer.reset buffer in
                 let _ = out := !out @ [c] in
-                current := {data = Lwt_stream.of_string ""; attr = c.attr; name = ""}
+                current := {data = Lwt_stream.of_string ""; attr = Hashtbl.create 16; name = ""}
 
         (* End of header *)
-        | x when !in_header && x = "" ->
+        | x when !in_header && x="" ->
             in_header := false
 
         (* Get attributes  *)
