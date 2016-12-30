@@ -220,7 +220,7 @@ module MakeYurt (X : Merz_query.QUERY) : YURT_SERVER = struct
         Lwt.catch (fun () -> start s)
         (fun exc -> start_auto_restart s)
 
-    let run ?fn:(fn=start_auto_restart) s =
+    let run ?fn:(fn=start) s =
          try Lwt_main.run (fn s)
          with _ -> ()
 
