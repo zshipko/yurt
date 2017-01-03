@@ -25,11 +25,12 @@ let parse_form_urlencoded_list (req : request_context) : (string * string list) 
     body_string req
     >|= Uri.query_of_encoded
 
-(** Parse URL encoded form into a Merz.value *)
-let parse_form_urlencoded_value (req : request_context) : Merz.value Lwt.t =
-    parse_form_urlencoded req
-    >|= (fun f ->
-        Dict (value_dict_of_query_dict f))
+(** Parse URL encoded form into JSON *)
+let parse_form_urlencoded_json (req : request_context) : Ezjsonm.t Lwt.t =
+    parse_form_urlencoded_list req
+    >|= fun f ->
+        `O (List.map (fun (k, v) ->
+            k, `A (List.map Ezjsonm.encode_string v)) f)
 
 (** There are a couple of big things from RFC2388 that aren't implemented yet:
  *    1. multipart/mixed content type may not be parsed correctly.

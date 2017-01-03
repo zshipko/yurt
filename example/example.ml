@@ -29,22 +29,13 @@ let _ =
 
     (** Convert all query string arguments to json *)
     >| get "/tojson" (fun req ->
-            finish_json req (json_of_value (query_value req)))
+            finish_json req (query_json req))
 
     (** Convert all posted arguments to json, an example using the `sync` function *)
     >| post (route [`Path "tojson"]) (fun req ->
-        let p = sync (parse_form_urlencoded_value req) in
-        let j =  json_of_value p in
-        finish_json req j)
+        let p = sync (parse_form_urlencoded_json req) in
+        finish_json req p)
 
-    (** Returns a single multipart item if at least one is sent *)
-    >| post (route [`Path "multipart"]) (fun req ->
-        parse_form_multipart req
-        >>= fun d ->
-            match d with
-            | {data = d; attr = a; name = s}::_ ->
-                finish_string req (s ^ ": " ^ d)
-            | [] -> finish_string req "ERROR")
 
     (* Uncomment this to daemonize the process
     >|| (fun ctx -> daemonize ctx ()) *)

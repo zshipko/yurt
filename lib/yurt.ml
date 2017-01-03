@@ -4,8 +4,8 @@
 module Body = struct
     include Cohttp_lwt_body
 
-    let of_value (ex : Merz.value) : t =
-        of_string (Merz.string_of_value ex)
+    let of_json ex : t =
+        of_string (Ezjsonm.to_string ex)
 end
 
 (** Routing *)

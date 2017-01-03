@@ -91,10 +91,10 @@ let finish_stream ?status:(status=`OK) (req : request_context) (s : string Lwt_s
         Server.respond ~headers:req.response_header ~status:status ~body:(Cohttp_lwt_body.of_stream s) ()
 
 (** Finish with JSON *)
-let finish_json ?status:(status=`OK) (req : request_context) (j : Merz_json.json) : response =
+let finish_json ?status:(status=`OK) (req : request_context) (j : Ezjsonm.t) : response =
     let open Request in
     let _ = req.response_header <- Header.replace req.response_header "Content-Type" "application/json" in
-    finish_string ~status:status req (Merz_json.string_of_json j)
+    finish_string ~status:status req (Ezjsonm.to_string j)
 
 (** Finish with HTML *)
 let finish_html ?status:(status=`OK) (req : request_context) (h : Yurt_html.t) : response =
@@ -102,10 +102,6 @@ let finish_html ?status:(status=`OK) (req : request_context) (h : Yurt_html.t) :
     let _ = req.response_header <- Header.replace req.response_header "Content-Type" "text/html" in
     finish_string ~status:status req (Yurt_html.to_string h)
 
-
-(** Convert value to JSON and finish *)
-let finish_json_value ?status:(status=`OK) (req : request_context) (ex : Merz.value) : response =
-    finish_json ~status:status req (Merz_json.json_of_value ex)
 
 (** Write a redirect response *)
 let redirect (req : request_context) (url : string) : response =
@@ -131,34 +127,20 @@ let query_dict_of_query (q : (string * string list) list) =
             Hashtbl.replace d k (l @ v)
         else Hashtbl.replace d k v) q; d
 
-let _convert_string_if_needed (ex : Merz.value) : Merz.value =
-    match ex with
-    | Merz.Var s -> Merz.String s
-    | _ -> ex
-
-let value_dict_of_query_dict (d : (string, string list) Hashtbl.t) : Merz.value Dict.t =
-    let d' = Dict.empty in
-    Hashtbl.fold (fun k v acc ->
-        let ex =  (match v with
-            | a::[] -> _convert_string_if_needed (Merz.value_of_string a)
-            | _ ->  Merz.List (List.map (fun n ->
-                _convert_string_if_needed (Merz.value_of_string n)) v)) in
-            Dict.add k ex acc) d d'
-
 (** Get a hashtable of all query string parameters *)
 let query_dict (req : request_context) : (string, string list) Hashtbl.t =
     query_dict_of_query (query_all req)
 
-(** Get an Merz.Dict of query string arguments *)
-let query_value (req : request_context) : Merz.value =
-    let d = query_dict req in
-    Merz.Dict (value_dict_of_query_dict d)
-
-(** Get a list of all query string params with the same name m*)
+(** Get a list of all query string params with the same name *)
 let query (req : request_context) (name : string) : (string * string list) list =
     let q = Uri.query (uri req) in
     List.filter (fun (key, _) ->
         key = name) q
+
+let query_json (req : request_context) : Ezjsonm.t =
+    let f = query_all req in
+    `O (List.map (fun (k, v) ->
+        k, `A (List.map Ezjsonm.encode_string v)) f)
 
 (** Get a string value for a single query string value by key *)
 let query_string (req : request_context) (name : string) : string option =

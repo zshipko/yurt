@@ -1,6 +1,5 @@
 exception Invalid_route_type
 
-open Merz.Value
 open Merz.Util
 
 (** The `Route module hlps with building routes *)
@@ -125,24 +124,24 @@ let param_string (p : params) (s : string) : string =
     | `Int s | `String s | `Float s | `Match (_, s) -> s
     | _ -> raise Invalid_route_type
 
-(* Convert a route element to Merz.value *)
-let rec value_of_route (r : route) : Merz.value =
+(* Convert a route element to JSON value *)
+let rec json_of_route (r : route) : Ezjsonm.value =
      match r with
-        | `Int i -> Int (Int64.of_string i)
-        | `Float i -> Float (float_of_string i)
-        | `String "true" -> Merz._true
-        | `String "false" -> Merz._false
-        | `String i -> String i
-        | `Path i -> String i
-        | `Match (name, i) -> String i
-        | `Route i ->  List (List.map value_of_route i)
+        | `Int i -> `Float (float_of_string i)
+        | `Float i -> `Float (float_of_string i)
+        | `String "true" -> `Bool true
+        | `String "false" -> `Bool false
+        | `String i -> `String i
+        | `Path i -> `String i
+        | `Match (name, i) -> `String i
+        | `Route i ->  `A (List.map json_of_route i)
 
-(* Convert params to Merz.value *)
-let value_of_params (p : params) : Merz.value =
+(* Convert params to JSON value *)
+let json_of_params p =
     let dst = Dict.empty in
     let dst = Hashtbl.fold (fun k v acc ->
-        Dict.add k (value_of_route v) acc) p dst in
-    Dict dst
+        Dict.add k (json_of_route v) acc) p dst in
+    `O (Dict.to_pairs dst)
 
 
 
