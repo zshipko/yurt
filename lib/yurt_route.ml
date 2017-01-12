@@ -1,7 +1,5 @@
 exception Invalid_route_type
 
-open Merz.Util
-
 (** The `Route module hlps with building routes *)
 
 (** The route type allows for URL routes to be built using strong types *)
@@ -138,10 +136,9 @@ let rec json_of_route (r : route) : Ezjsonm.value =
 
 (* Convert params to JSON value *)
 let json_of_params p =
-    let dst = Dict.empty in
     let dst = Hashtbl.fold (fun k v acc ->
-        Dict.add k (json_of_route v) acc) p dst in
-    `O (Dict.to_pairs dst)
+        (k, (json_of_route v))::acc) p [] in
+    `O dst
 
 
 

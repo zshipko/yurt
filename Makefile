@@ -2,17 +2,10 @@ flags=-I `ocamlfind query uri`,\
 	  -I `ocamlfind query conduit`,\
 	  -I `ocamlfind query lwt`,\
 	  -I `ocamlfind query cohttp.lwt`,\
-	  -I `ocamlfind query merz` \
-	  -I `ocamlfind query irmin` \
-	  -I `ocamlfind query ezjsonm` \
-	  -I `ocamlfind query ocamlgraph`
+	  -I `ocamlfind query ezjsonm`
 
 all:
 	ocamlbuild -cflags "$(flags)" lib/yurt.cmxa lib/yurt.cma
-
-install-merz:
-	git clone https://github.com/twomblygroup/merz
-	cd merz && $(MAKE) && $(MAKE) install
 
 install:
 	$(MAKE) uninstall || :

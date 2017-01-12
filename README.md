@@ -11,8 +11,8 @@ Please note that the `yurt` API is not stable and will be evolving rapdily, incl
     - `opam install lwt`
 - Cohttp
     - `opam install cohttp`
-- Merz
-    - `make install-merz`
+- Ezjsonm
+    - `opam install ezjsonm`
 - ocamlbuild
 
 ## Building
@@ -32,8 +32,9 @@ To uninstall:
     server "127.0.0.1" 1234
 
     (* Add a handler *)
-    >| get "" (fun req ->
-        finish_string req "Hello, World!")
+    >| get "/<name:string>" (fun req params body ->
+        let body = "Hello" ^ param_string "name" in
+        respond_string ~status:`OK ~body ())
 
     (* Run it *)
     |> run

@@ -3,14 +3,12 @@ open Lwt
 open Yurt_request_ctx
 open Cohttp_lwt_unix
 
-open Merz
-
 exception Invalid_multipart_form
 
 (** Parse URL encoded form *)
-let parse_form_urlencoded (req : request_context) : (string, string list) Hashtbl.t Lwt.t =
+let urlencoded body : (string, string list) Hashtbl.t Lwt.t =
     let dst = Hashtbl.create 16 in
-    body_string req
+    Body.to_string body
     >|= Uri.query_of_encoded
     >|= Lwt_list.iter_s (fun (k, v) ->
         Lwt.return (
@@ -21,13 +19,13 @@ let parse_form_urlencoded (req : request_context) : (string, string list) Hashtb
             Hashtbl.replace dst k v))
     >>= (fun _ -> Lwt.return dst)
 
-let parse_form_urlencoded_list (req : request_context) : (string * string list) list Lwt.t =
-    body_string req
+let parse_form_urlencoded_list body : (string * string list) list Lwt.t =
+    Body.to_string body
     >|= Uri.query_of_encoded
 
 (** Parse URL encoded form into JSON *)
-let parse_form_urlencoded_json (req : request_context) : Ezjsonm.t Lwt.t =
-    parse_form_urlencoded_list req
+let urlencoded_json body : Ezjsonm.t Lwt.t =
+    parse_form_urlencoded_list body
     >|= fun f ->
         `O (List.map (fun (k, v) ->
             k, `A (List.map Ezjsonm.encode_string v)) f)
@@ -62,14 +60,14 @@ let is_file (m : multipart) : bool =
 let is_multipart_regexp = Str.regexp "multipart/.*"
 
 let is_multipart req : bool =
-    let content_type = Yurt_util.unwrap_option_default (Yurt_header.get req "Content-Type") "" in
+    let content_type = Yurt_util.unwrap_option_default (Header.get req.Request.headers "Content-Type") "" in
     Str.string_match (is_multipart_regexp) content_type 0
 
-let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart list Lwt.t =
+let multipart req body : multipart list Lwt.t =
     (** Output *)
     let out = ref [] in
 
-    let content_type = Yurt_util.unwrap_option_default (Yurt_header.get req "Content-Type") "" in
+    let content_type = Yurt_util.unwrap_option_default (Header.get req.Request.headers "Content-Type") "" in
 
     let b = split_semicolon content_type in
     let boundary = match b with
@@ -88,7 +86,7 @@ let parse_form_multipart (req: Yurt_request_ctx.request_context) : multipart lis
     let in_header = ref false in
 
     (* Input lines *)
-    Yurt_request_ctx.body_string req
+    Body.to_string body
 
     >>= (fun s -> Lwt.return (Str.split line_regexp s))
 
@@ -144,10 +142,10 @@ type form =
     | Urlencoded of (string, string list) Hashtbl.t
 
 (** Parse URL encoded form *)
-let parse_form (req : request_context) : form Lwt.t =
+let parse_form req body : form Lwt.t =
     if is_multipart req then
-        parse_form_multipart req
+        multipart req body
         >|= (fun f -> Multipart f)
     else
-        parse_form_urlencoded req
+        urlencoded body
         >|= (fun f -> Urlencoded f)
