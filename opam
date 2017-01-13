@@ -1,0 +1,20 @@
+opam-version: "1.2"
+version: "0.1"
+maintainer: "Zach Shipko <zachshipko@gmail.com>"
+authors: ["Zach Shipko"]
+license: "MIT"
+homepage: "https://github.com/zshipko/yurt"
+bug-reports: "https://github.com/zshipko/yurt/issues"
+dev-repo: "https://github.com/zshipko/yurt.git"
+doc: "https://github.com/zshipko/yurt"
+
+depends: [
+    "ocamlfind" {build}
+    "ocamlbuild" {build}
+    "cohttp"
+    "ezjsonm"
+]
+
+build: [[
+    "make"
+]]

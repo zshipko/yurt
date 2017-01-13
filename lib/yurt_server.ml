@@ -1,7 +1,5 @@
-open Yurt_request_ctx
-open Yurt_header
 open Yurt_route
-open Yurt_html
+open Yurt_request_ctx
 
 open Lwt
 include Cohttp_lwt_unix.Server

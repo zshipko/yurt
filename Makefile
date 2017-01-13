@@ -8,9 +8,7 @@ all:
 	ocamlbuild -cflags "$(flags)" lib/yurt.cmxa lib/yurt.cma
 
 install:
-	$(MAKE) uninstall || :
-	cd _build/lib && ocamlfind install yurt ../../META yurt.cmxa yurt.cma *.cmx *.cmo *.cmi yurt.a
-	rm -rf example/_build
+	opam pin add yurt .
 
 uninstall:
 	ocamlfind remove yurt
