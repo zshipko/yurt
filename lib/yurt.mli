@@ -7,7 +7,6 @@ module Route : sig
         | `Match of string * string
         | `Route of route list
     ]
-
     type params = (string, route) Hashtbl.t
 
     val string_of_route : route -> string
@@ -32,7 +31,7 @@ module Request_ctx : sig
     and response = (Response.t * Body.t) Lwt.t
 
     (** HTTP handler *)
-    and endpoint = Request.t -> Yurt_route.params -> Body.t -> response
+    and endpoint = Request.t -> Route.params -> Body.t -> response
 
     val query_all : Request.t -> (string * string list) list
     val query : Request.t -> (string, string list) Hashtbl.t

@@ -9,3 +9,4 @@ _build
 *.swp
 *.native
 *.byte
+yurt.install

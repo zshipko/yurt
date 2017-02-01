@@ -1,6 +1,6 @@
 exception Invalid_route_type
 
-(** The `Route module hlps with building routes *)
+(** The `Route module helps with building routes *)
 
 (** The route type allows for URL routes to be built using strong types *)
 type route = [
@@ -12,11 +12,11 @@ type route = [
     | `Route of route list
 ]
 
-(** The route cache allows the route -> regexp process to be memoized *)
-let route_cache = Hashtbl.create 16
-
 (** The type that contains parsed URL parameters *)
 type params = (string, route) Hashtbl.t
+
+(** The route cache allows the route -> regexp process to be memoized *)
+let route_cache : (route, Str.regexp) Hashtbl.t = Hashtbl.create 16
 
 let concat_filenames (s : string list) : string =
     if List.length s = 0 then ""
@@ -39,14 +39,14 @@ let rec string_of_route (r : route) : string  =
     | `Route p -> "/" ^ concat_filenames (List.map string_of_route p) ^ "/?"
 
 (** Convert a route to regexp *)
-let regexp_of_route (r : route) : Str.regexp =
+let regexp_of_route r : Str.regexp =
     try Hashtbl.find route_cache r
     with Not_found ->
         let rx = Str.regexp (string_of_route r) in
         Hashtbl.replace route_cache r rx; rx
 
 (** "/user/<name:int>" -> `Path "user", `Int "name" *)
-let rec route_of_string (s : string) : route =
+let rec route_of_string (s : string) =
     let args = Str.split slash_regexp s in
     `Route (List.map (fun arg ->
         if Str.string_match routevar_regexp arg 0 then
@@ -60,7 +60,7 @@ let rec route_of_string (s : string) : route =
         else `Path arg) args)
 
 (** Returns a list of variables found in a route *)
-let rec variables (r : route) : route list =
+let rec variables r =
     match r with
     | `String _ | `Int _ | `Float _ | `Match _ -> [r]
     | `Route (h::t) -> variables h @ variables (`Route t)
@@ -68,13 +68,13 @@ let rec variables (r : route) : route list =
     | `Path _ -> []
 
 (** Check to see if a string matches the route's regexp *)
-let matches (r : route) (s : string) : bool =
+let matches r s : bool =
     Str.string_match (regexp_of_route r) s 0 &&
     Str.match_beginning () = 0 &&
     Str.match_end () = String.length s
 
 (** Get a parameters after a successful route match *)
-let get_params (r : route) (s : string) : params =
+let get_params r s =
     let p = Hashtbl.create 16 in
     let idx = ref 1 in
     let rec findvar rt =
@@ -97,7 +97,7 @@ let get_params (r : route) (s : string) : params =
     findvar r; p
 
 (** Get a single parameter as int by name *)
-let param_int (p : params) (s : string) : int =
+let param_int p s : int =
     match Hashtbl.find p s with
     | `Int i -> int_of_string i
     | `Float i -> int_of_float (float_of_string i)
@@ -107,7 +107,7 @@ let param_int (p : params) (s : string) : int =
     | _ -> raise Invalid_route_type
 
 (** Get a single parameter as float by name *)
-let param_float (p : params) (s : string) : float =
+let param_float p s : float =
     match Hashtbl.find p s with
     | `Int i -> float_of_string i
     | `Float i -> float_of_string i
@@ -117,13 +117,13 @@ let param_float (p : params) (s : string) : float =
     | _ -> raise Invalid_route_type
 
 (** Get a single parameter as string by name *)
-let param_string (p : params) (s : string) : string =
+let param_string p s : string =
     match Hashtbl.find p s with
     | `Int s | `String s | `Float s | `Match (_, s) -> s
     | _ -> raise Invalid_route_type
 
 (* Convert a route element to JSON value *)
-let rec json_of_route (r : route) : Ezjsonm.value =
+let rec json_of_route r : Ezjsonm.value =
      match r with
         | `Int i -> `Float (float_of_string i)
         | `Float i -> `Float (float_of_string i)

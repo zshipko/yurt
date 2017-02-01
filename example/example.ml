@@ -1,5 +1,8 @@
 open Lwt
 open Yurt
+open Server
+open Request_ctx
+open Route
 
 let _ =
     server "127.0.0.1" 8880
@@ -13,11 +16,10 @@ let _ =
     >| file "./static/test.html" "testing"
 
     (** Reading query string value *)
-    >>| (fun ctx ->
-        get "" (fun req params body ->
+    >| get "" (fun req params body ->
         match query_string req "test" with
         | Some s -> respond_string ~status:`OK ~body:s ()
-        | None -> respond_string ~status:`OK ~body:"TEST" ()))
+        | None -> respond_string ~status:`OK ~body:"TEST" ())
 
     (** Url parameters *)
     >| get "/<a:int>/<b:int>" (fun req params body ->
@@ -31,8 +33,8 @@ let _ =
         respond_json ~status:`OK ~body:(query_json req) ())
 
     (** Convert all posted arguments to json *)
-    >| post (route [`Path "tojson"]) (fun req  params body->
-        urlencoded_json body >>= fun p ->
+    >| post (string_of_route (`Path "tojson")) (fun req  params body->
+        Form.urlencoded_json body >>= fun p ->
             respond_json ~status:`OK ~body:(query_json req) ())
 
 
