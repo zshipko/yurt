@@ -11,10 +11,12 @@ doc: "https://github.com/zshipko/yurt"
 depends: [
     "ocamlfind" {build}
     "ocamlbuild" {build}
-    "cohttp"
+    "topkg" {build}
+    "cohttp.lwt"
     "ezjsonm"
 ]
 
 build: [[
-    "make"
+    "ocaml" "./pkg/pkg.ml" "build"
+        "--pinned" "%{pinned}%"
 ]]

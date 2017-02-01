@@ -1,3 +1,6 @@
+let _ =
+    Random.self_init ()
+
 (** Unwrap option and raise Not_found if opt is None *)
 let unwrap_option opt =
     match opt with
@@ -9,9 +12,6 @@ let unwrap_option_default opt d =
     match opt with
     | Some a -> a
     | None -> d
-
-let _ =
-    Random.self_init ()
 
 (** Generate a UUID (verison 4) *)
 let uuid4 () =

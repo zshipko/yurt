@@ -4,9 +4,7 @@ open Yurt_route
 module Body = Cohttp_lwt_body
 module Request = Cohttp_lwt_unix.Request
 module Response = Cohttp_lwt_unix.Response
-module Header = struct
-    include Cohttp.Header
-end
+module Header = Cohttp.Header
 
 type status_code = Cohttp.Code.status_code
 
@@ -30,12 +28,6 @@ let query_dict_of_query (q : (string * string list) list) =
 (** Get a hashtable of all query string parameters *)
 let query req : (string, string list) Hashtbl.t =
     query_dict_of_query (query_all req)
-
-(** Get a list of all query string params with the same name *)
-let query_name req  (name : string) : (string * string list) list =
-    let q = Uri.query (Request.uri req) in
-    List.filter (fun (key, _) ->
-        key = name) q
 
 (** Convert all query string paramters to a json object *)
 let query_json req : Ezjsonm.t =

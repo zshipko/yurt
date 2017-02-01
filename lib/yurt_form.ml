@@ -19,13 +19,13 @@ let urlencoded body : (string, string list) Hashtbl.t Lwt.t =
             Hashtbl.replace dst k v))
     >>= (fun _ -> Lwt.return dst)
 
-let parse_form_urlencoded_list body : (string * string list) list Lwt.t =
+let urlencoded_list body : (string * string list) list Lwt.t =
     Body.to_string body
     >|= Uri.query_of_encoded
 
 (** Parse URL encoded form into JSON *)
 let urlencoded_json body : Ezjsonm.t Lwt.t =
-    parse_form_urlencoded_list body
+    urlencoded_list body
     >|= fun f ->
         `O (List.map (fun (k, v) ->
             k, `A (List.map Ezjsonm.encode_string v)) f)

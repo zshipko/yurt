@@ -15,7 +15,7 @@ type server = {
 let tls_server_key_of_config (crt, key, pass, _) =
     `TLS (crt, key, pass)
 
-let server ?tls_config:(tls_config=None) ?logger:(logger=(!Lwt_log.default)) ?root (host : string) (port : int) : server =
+let server ?tls_config ?logger:(logger=(!Lwt_log.default))  (host : string) (port : int) : server =
     {
         host = host;
         port = port;
@@ -49,10 +49,6 @@ let server ?tls_config:(tls_config=None) ?logger:(logger=(!Lwt_log.default)) ?ro
 (** Configure TLS for server *)
 let configure_tls ?password:(password=`No_password) (s : server) (crt_file : string) (key_file : string) : server =
     s.tls_config <- Some (`Crt_file_path crt_file, `Key_file_path key_file, password, `Port s.port); s
-
-(** Create a path based on the server host *)
-let path (s : server) (p : string list) : string =
-    s.host ^  "/" ^ String.concat "/" p
 
 (** Finish with a string stream *)
 let respond_stream ~body:(s : string Lwt_stream.t) =
@@ -114,9 +110,6 @@ let update (r : string) (ep : endpoint) (s : server) =
 let delete (r : string) (ep : endpoint) (s : server) =
     register_route_string s "DELETE" r ep
 
-let options (r : string) (ep : endpoint) (s : server) =
-    register_route_string s "OPTIONS" r ep
-
 let static (p : string) (r : string) (s : server) =
     register_static_file_route s p r
 
@@ -138,8 +131,6 @@ let rec wrap (s : server) srv =
 let daemonize ?directory ?syslog (s : server) =
     Lwt_daemon.daemonize ~stdin:`Close ~stdout:(`Log s.logger) ~stderr:(`Log s.logger) ?directory ?syslog ()
 
-exception Cannot_start_server
-
 (** Start a configured server with attached endpoints *)
 let start (s : server) =
     match s.tls_config with
@@ -154,21 +145,15 @@ let start (s : server) =
             let ctx' = Cohttp_lwt_unix_net.init ?ctx:(Some ctx) () in
             wrap s (create ~mode:(`TCP (`Port s.port)) ~ctx:ctx'))
 
-let rec start_auto_restart (s : server) =
-    Lwt.catch (fun () -> start s)
-    (fun exc -> start_auto_restart s)
+exception Cannot_start_server
 
 let run ?fn:(fn=start) s =
      try Lwt_main.run (fn s)
-     with _ -> ()
+     with _ -> raise Cannot_start_server
 
 (** Add a handler *)
 let (>|) (s : server) (fn :  server -> server ) : server =
     fn s
-
-(** Add a handler function that takes the server as a single argument *)
-let (>>|) (s : server) (fn : server -> server -> server) : server =
-    fn s s
 
 (** Run a function that returns unit in the handler definition chain *)
 let (>||) (s : server) (fn : server -> unit) : server =

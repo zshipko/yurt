@@ -12,7 +12,3 @@ include Server
 include Route
 include Request_ctx
 include Form
-
-(** Convert a route-string to route type *)
-let route a =
-    Route.string_of_route (`Route a)
