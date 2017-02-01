@@ -14,15 +14,15 @@ Please note that the `yurt` API is not stable and will be evolving rapdily, incl
 - Ezjsonm
     - `opam install ezjsonm`
 - ocamlbuild
+- topkg
 
 ## Building
 
-    make
-    make install
+    opam pin add yurt .
 
 To uninstall:
 
-    make uninstall
+    opam uninstall yurt
 
 ## Usage
 
