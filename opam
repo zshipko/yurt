@@ -2,7 +2,7 @@ opam-version: "1.2"
 version: "0.1"
 maintainer: "Zach Shipko <zachshipko@gmail.com>"
 authors: ["Zach Shipko"]
-license: "MIT"
+license: "ISC"
 homepage: "https://github.com/zshipko/yurt"
 bug-reports: "https://github.com/zshipko/yurt/issues"
 dev-repo: "https://github.com/zshipko/yurt.git"
