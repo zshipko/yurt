@@ -33,8 +33,8 @@ To uninstall:
 
     (* Add a handler *)
     >| get "/<name:string>" (fun req params body ->
-        let body = "Hello" ^ param_string "name" in
-        respond_string ~status:`OK ~body ())
+        let greeting = "Hello " ^ param_string "name" in
+        respond_string ~status:`OK ~body:greeting ())
 
     (* Run it *)
     |> run
