@@ -1,3 +1,5 @@
+![Yurt image](/pkg/main.png)
+
 Yurt
 ====
 
