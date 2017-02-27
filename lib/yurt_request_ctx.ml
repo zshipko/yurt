@@ -3,7 +3,7 @@ open Yurt_route
 
 module Body = Cohttp_lwt_body
 module Request = Cohttp_lwt_unix.Request
-module Response = Cohttp_lwt_unix.Response
+module Response = Cohttp.Response
 module Header = Cohttp.Header
 
 type status_code = Cohttp.Code.status_code

@@ -22,7 +22,7 @@ end
 module Request_ctx : sig
     module Body = Cohttp_lwt_body
     module Request = Cohttp_lwt_unix.Request
-    module Response = Cohttp_lwt_unix.Response
+    module Response = Cohttp.Response
     module Header = Cohttp.Header
 
     type status_code = Cohttp.Code.status_code
@@ -71,10 +71,12 @@ module Server : sig
         status:Request_ctx.status_code ->
         unit -> (Request_ctx.Response.t * Cohttp_lwt_body.t) Lwt.t
     val respond_json : body:Ezjsonm.t ->
+        ?flush:bool ->
         ?headers:Request_ctx.Header.t ->
         status:Request_ctx.status_code ->
         unit -> (Request_ctx.Response.t * Cohttp_lwt_body.t) Lwt.t
     val respond_html : body:Yurt_html.t ->
+        ?flush:bool ->
         ?headers:Request_ctx.Header.t ->
         status:Request_ctx.status_code ->
         unit -> (Request_ctx.Response.t * Cohttp_lwt_body.t) Lwt.t
