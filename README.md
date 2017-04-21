@@ -1,11 +1,13 @@
-![Yurt image](/pkg/main.png)
-
 Yurt
 ====
 
-`yurt` is an HTTP framework for OCaml based on [Cohttp](https://github.com/mirage/ocaml-cohttp)
+`yurt` is an HTTP framework for OCaml based on [Cohttp](https://github.com/mirage/ocaml-cohttp).
 
-Please note that the `yurt` API is not entirely stable which means there may still be breaking changes in the future.
+## Features
+
+* Simple API
+* Multipart forms (not provided by Cohttp)
+* Regex based URL routing
 
 ## Dependencies
 
