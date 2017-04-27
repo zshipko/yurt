@@ -8,6 +8,8 @@ module Header = Cohttp.Header
 
 type status_code = Cohttp.Code.status_code
 
+and request = Request.t
+
 (** Response type *)
 and response = (Response.t * Body.t) Lwt.t
 

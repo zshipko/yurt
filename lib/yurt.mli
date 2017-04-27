@@ -27,6 +27,8 @@ module Request_ctx : sig
 
     type status_code = Cohttp.Code.status_code
 
+    and request = Request.t
+
     (** Response type *)
     and response = (Response.t * Body.t) Lwt.t
 
@@ -83,7 +85,9 @@ module Server : sig
     val redirect : string ->
         ?headers:Request_ctx.Header.t ->
         unit -> (Request_ctx.Response.t * Cohttp_lwt_body.t) Lwt.t
-    val register_routes : server -> (string * Route.route * Request_ctx.endpoint) list -> server
+    val register : server -> (string * Route.route * Request_ctx.endpoint) list -> server
+    val register_route : server -> string -> Route.route -> Request_ctx.endpoint -> server
+    val register_route_string : server -> string -> string -> Request_ctx.endpoint -> server
     val options : string -> Request_ctx.endpoint -> server -> server
     val get : string -> Request_ctx.endpoint -> server -> server
     val post : string -> Request_ctx.endpoint -> server -> server

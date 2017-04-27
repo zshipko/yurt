@@ -66,17 +66,17 @@ let redirect (url : string) =
     respond_redirect ~uri:(Uri.of_string url)
 
 (** Sets a route for a compiled regex + endpoint function *)
-let register_routes (s : server) (r : (string * route * endpoint) list) =
+let register (s : server) (r : (string * route * endpoint) list) =
     s.routes <- s.routes @ (List.map (fun (meth, x, ep) ->
         (String.uppercase_ascii meth, x, ep)) r); s
 
 (** Register a single route *)
 let register_route_string (s : server) (meth : string) (route : string) (ep : endpoint) =
-    register_routes s [meth, Yurt_route.route_of_string route, ep]
+    register s [meth, Yurt_route.route_of_string route, ep]
 
 (** Register a single route *)
 let register_route (s : server) (meth : string) (r : route) (ep : endpoint) =
-    register_routes s [meth, r, ep]
+    register s [meth, r, ep]
 
 (** Register a route for a directory *)
 let register_static_file_route  ?headers (s: server) (path : string) (prefix : string) =
