@@ -12,7 +12,9 @@ depends: [
     "ocamlfind" {build}
     "ocamlbuild" {build}
     "topkg" {build}
-    "cohttp.lwt"
+    "lwt" {>= "2.7.0" }
+    "conduit" {>= "0.15.0"}
+    "cohttp" {>= "0.22.0"}
     "ezjsonm"
 ]
 
@@ -20,3 +22,5 @@ build: [[
     "ocaml" "./pkg/pkg.ml" "build"
         "--pinned" "%{pinned}%"
 ]]
+available: [ ocaml-version >= "4.03.0" ]
+
