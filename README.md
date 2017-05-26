@@ -30,7 +30,8 @@ To uninstall:
 
 ## Usage
 
-    open Yurt
+    open Yurt.Server
+    open Yurt.Route
 
     (* Create a server *)
     server "127.0.0.1" 1234
