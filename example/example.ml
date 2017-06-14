@@ -21,6 +21,11 @@ let _ =
         | Some s -> respond_string ~status:`OK ~body:s ()
         | None -> respond_string ~status:`OK ~body:"TEST" ())
 
+    >| post "/multipart" (fun req params body ->
+        Form.multipart req body >>= fun m ->
+        let body = Printf.sprintf "%d file(s)\n" (List.length m) in
+        respond_string ~status:`OK ~body ())
+
     (** Url parameters *)
     >| get "/<a:int>/<b:int>" (fun req params body ->
         let a = param_int params "a" in
@@ -36,7 +41,6 @@ let _ =
     >| post (string_of_route (`Path "tojson")) (fun req  params body->
         Form.urlencoded_json body >>= fun p ->
             respond_json ~status:`OK ~body:(query_json req) ())
-
 
     (* Uncomment this to daemonize the process
     >|| (fun ctx -> daemonize ctx ()) *)

@@ -6,27 +6,12 @@ Yurt
 ## Features
 
 * Simple API
-* Multipart forms (not provided by Cohttp)
+* Multipart forms
 * Regex based URL routing
 
-## Dependencies
+## Installation
 
-- Lwt
-    - `opam install lwt`
-- Cohttp
-    - `opam install cohttp`
-- Ezjsonm
-    - `opam install ezjsonm`
-- ocamlbuild
-- topkg
-
-## Building
-
-    opam pin add yurt .
-
-To uninstall:
-
-    opam uninstall yurt
+    opam install yurt
 
 ## Usage
 
@@ -45,13 +30,5 @@ To uninstall:
     |> run
 
 See `example/example.ml` for more examples.
-
-## Documentation
-
-To build the documentation run:
-
-    make docs
-
-And it will be available as a series of HTML pages under the `doc/` directory.
 
 
