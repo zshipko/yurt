@@ -8,6 +8,7 @@ Yurt
 * Simple API
 * Multipart forms
 * Regex based URL routing
+* Code-based templates
 
 ## Installation
 
@@ -23,8 +24,8 @@ Yurt
 
     (* Add a handler *)
     >| get "/<name:string>" (fun req params body ->
-        let greeting = "Hello " ^ param_string "name" in
-        respond_string ~status:`OK ~body:greeting ())
+        let body = Yurt_html.h1 ("Hello " ^ param_string "name") in
+        respond_html ~status:`OK ~body ())
 
     (* Run it *)
     |> run
