@@ -8,7 +8,7 @@ let _ =
     server "127.0.0.1" 8880
 
     (** Uncomment this block to configure TLS
-    !> fun ctx ->
+    |> fun ctx ->
         configure_tls ctx "./server.crt" "./server.key" *)
 
     >| static "./static" "files"
