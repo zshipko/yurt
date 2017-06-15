@@ -24,7 +24,7 @@ Yurt
 
     (* Add a handler *)
     >| get "/<name:string>" (fun req params body ->
-        let body = Yurt_html.h1 ("Hello " ^ param_string "name") in
+        let body = Yurt_html.h1 ("Hello " ^ param_string params "name") in
         respond_html ~status:`OK ~body ())
 
     (* Run it *)
