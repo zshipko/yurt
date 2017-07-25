@@ -1,5 +1,5 @@
 description = "An HTTP Microframework for Cohttp"
-requires = "threads str dynlink cohttp.lwt ezjsonm"
+requires = "threads str dynlink cohttp-lwt-unix ezjsonm"
 archive(byte) = "yurt.cma"
 archive(native) = "yurt.cmxa"
 plugin(byte) = "yurt.cma"
