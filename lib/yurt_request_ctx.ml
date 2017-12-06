@@ -1,7 +1,7 @@
 open Lwt
 open Yurt_route
 
-module Body = Cohttp_lwt_body
+module Body = Cohttp_lwt.Body
 module Request = Cohttp_lwt_unix.Request
 module Response = Cohttp.Response
 module Header = Cohttp.Header

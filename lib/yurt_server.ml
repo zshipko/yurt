@@ -137,12 +137,12 @@ let start (s : server) =
     | Some config ->
         Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:(Some (tls_server_key_of_config config)) ()
         >>= (fun ctx ->
-            let ctx' = Cohttp_lwt_unix_net.init ?ctx:(Some ctx) () in
+            let ctx' = Cohttp_lwt_unix.Net.init ?ctx:(Some ctx) () in
             wrap s (create ~mode:(`TLS config) ~ctx:ctx'))
      | None ->
         Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:None ()
         >>= (fun ctx ->
-            let ctx' = Cohttp_lwt_unix_net.init ?ctx:(Some ctx) () in
+            let ctx' = Cohttp_lwt_unix.Net.init ?ctx:(Some ctx) () in
             wrap s (create ~mode:(`TCP (`Port s.port)) ~ctx:ctx'))
 
 exception Cannot_start_server

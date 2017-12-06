@@ -225,7 +225,7 @@ let import name =
     let n = in_channel_length ic in
     let s = Bytes.create n in
     really_input ic s 0 n;
-    close_in ic; tag ~content:(Some s) (`RAW)
+    close_in ic; tag ~content:(Some (Bytes.to_string s)) (`RAW)
 
 let html ?attr:(attr=[]) ?content children =
     tag ~attr:attr ~content:content ~children:children `HTML

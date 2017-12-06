@@ -20,7 +20,7 @@ module Route : sig
 end
 
 module Request_ctx : sig
-    module Body = Cohttp_lwt_body
+    module Body = Cohttp_lwt.Body
     module Request = Cohttp_lwt_unix.Request
     module Response = Cohttp.Response
     module Header = Cohttp.Header
@@ -44,7 +44,7 @@ module Request_ctx : sig
 end
 
 module Server : sig
-    include Cohttp_lwt.S.Server with module IO = Cohttp_lwt_unix_io
+    include Cohttp_lwt.S.Server with module IO = Cohttp_lwt_unix.IO
 
     val resolve_file : docroot:string -> uri:Uri.t -> string
     val respond_file :
@@ -71,20 +71,20 @@ module Server : sig
         ?headers:Request_ctx.Header.t ->
         ?flush:bool ->
         status:Request_ctx.status_code ->
-        unit -> (Request_ctx.Response.t * Cohttp_lwt_body.t) Lwt.t
+        unit -> (Request_ctx.Response.t * Cohttp_lwt.Body.t) Lwt.t
     val respond_json : body:Ezjsonm.t ->
         ?flush:bool ->
         ?headers:Request_ctx.Header.t ->
         status:Request_ctx.status_code ->
-        unit -> (Request_ctx.Response.t * Cohttp_lwt_body.t) Lwt.t
+        unit -> (Request_ctx.Response.t * Cohttp_lwt.Body.t) Lwt.t
     val respond_html : body:Yurt_html.t ->
         ?flush:bool ->
         ?headers:Request_ctx.Header.t ->
         status:Request_ctx.status_code ->
-        unit -> (Request_ctx.Response.t * Cohttp_lwt_body.t) Lwt.t
+        unit -> (Request_ctx.Response.t * Cohttp_lwt.Body.t) Lwt.t
     val redirect : string ->
         ?headers:Request_ctx.Header.t ->
-        unit -> (Request_ctx.Response.t * Cohttp_lwt_body.t) Lwt.t
+        unit -> (Request_ctx.Response.t * Cohttp_lwt.Body.t) Lwt.t
     val register : server -> (string * Route.route * Request_ctx.endpoint) list -> server
     val register_route : server -> string -> Route.route -> Request_ctx.endpoint -> server
     val register_route_string : server -> string -> string -> Request_ctx.endpoint -> server
@@ -105,29 +105,29 @@ module Server : sig
 end
 
 module Client : sig
-    val get : ?ctx:Cohttp_lwt_unix_net.ctx ->
+    val get : ?ctx:Cohttp_lwt_unix.Net.ctx ->
               ?headers:Request_ctx.Header.t ->
               string -> (Request_ctx.Response.t * string) Lwt.t
-    val post : ?ctx:Cohttp_lwt_unix_net.ctx ->
+    val post : ?ctx:Cohttp_lwt_unix.Net.ctx ->
                ?headers:Request_ctx.Header.t ->
-               ?body:Cohttp_lwt_body.t ->
+               ?body:Cohttp_lwt.Body.t ->
                string -> (Request_ctx.Response.t * string) Lwt.t
-    val post_form : ?ctx:Cohttp_lwt_unix_net.ctx ->
+    val post_form : ?ctx:Cohttp_lwt_unix.Net.ctx ->
                ?headers:Request_ctx.Header.t ->
                params:(string * string list) list ->
                string -> (Request_ctx.Response.t * string) Lwt.t
-    val request : ?ctx:Cohttp_lwt_unix_net.ctx ->
+    val request : ?ctx:Cohttp_lwt_unix.Net.ctx ->
                ?headers:Request_ctx.Header.t ->
-               ?body:Cohttp_lwt_body.t ->
+               ?body:Cohttp_lwt.Body.t ->
                Cohttp.Code.meth -> string -> (Request_ctx.Response.t * string) Lwt.t
-    val get_json : ?ctx:Cohttp_lwt_unix_net.ctx ->
+    val get_json : ?ctx:Cohttp_lwt_unix.Net.ctx ->
               ?headers:Request_ctx.Header.t ->
               string -> (Request_ctx.Response.t * Ezjsonm.t) Lwt.t
-    val post_json : ?ctx:Cohttp_lwt_unix_net.ctx ->
+    val post_json : ?ctx:Cohttp_lwt_unix.Net.ctx ->
                ?headers:Request_ctx.Header.t ->
-               ?body:Cohttp_lwt_body.t ->
+               ?body:Cohttp_lwt.Body.t ->
                string -> (Request_ctx.Response.t * Ezjsonm.t) Lwt.t
-    val post_form_json : ?ctx:Cohttp_lwt_unix_net.ctx ->
+    val post_form_json : ?ctx:Cohttp_lwt_unix.Net.ctx ->
                ?headers:Request_ctx.Header.t ->
                ?params:(string * string list) list ->
                string -> (Request_ctx.Response.t * Ezjsonm.t) Lwt.t
@@ -142,9 +142,9 @@ end
 
 module Form : sig
     exception Invalid_multipart_form
-    val urlencoded : Cohttp_lwt_body.t -> (string, string list) Hashtbl.t Lwt.t
-    val urlencoded_list : Cohttp_lwt_body.t -> (string * string list) list Lwt.t
-    val urlencoded_json : Cohttp_lwt_body.t -> Ezjsonm.t Lwt.t
+    val urlencoded : Cohttp_lwt.Body.t -> (string, string list) Hashtbl.t Lwt.t
+    val urlencoded_list : Cohttp_lwt.Body.t -> (string * string list) list Lwt.t
+    val urlencoded_json : Cohttp_lwt.Body.t -> Ezjsonm.t Lwt.t
 
     type multipart = {
         mutable data : char Lwt_stream.t;
@@ -154,11 +154,11 @@ module Form : sig
 
     val get_attr : multipart -> string -> string list
     val is_multipart : Request_ctx.Request.t -> bool
-    val multipart : Request_ctx.Request.t -> Cohttp_lwt_body.t -> multipart list Lwt.t
+    val multipart : Request_ctx.Request.t -> Cohttp_lwt.Body.t -> multipart list Lwt.t
 
     type form =
         | Multipart of multipart list
         | Urlencoded of (string, string list) Hashtbl.t
 
-    val parse_form : Request_ctx.Request.t -> Cohttp_lwt_body.t -> form Lwt.t
+    val parse_form : Request_ctx.Request.t -> Cohttp_lwt.Body.t -> form Lwt.t
 end
