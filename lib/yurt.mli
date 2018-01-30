@@ -61,6 +61,7 @@ module Server : sig
 
     val server : ?tls_config:Conduit_lwt_unix.server_tls_config ->
                     ?logger:Lwt_log.logger -> string -> int -> server
+    val server_from_config : string -> server
     val log_debug : server -> string -> string -> unit
     val log_info : server -> string -> string -> unit
     val log_notice : server -> string -> string -> unit

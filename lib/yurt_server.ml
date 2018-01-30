@@ -24,6 +24,38 @@ let server ?tls_config ?logger:(logger=(!Lwt_log.default))  (host : string) (por
         logger = logger;
     }
 
+let find_string j path =
+    match Ezjsonm.find j path with
+    | `String s -> s
+    | `Float f -> string_of_float f
+    | _ -> raise Not_found
+
+let find_float j path =
+    match Ezjsonm.find j path with
+    | `String s -> float_of_string s
+    | `Float f -> f
+    | _ -> raise Not_found
+
+let find_tls_config j port =
+    try
+        let crt = find_string j ["ssl-certificate"] in
+        let key = find_string j ["ssl-key"] in
+        Some (`Crt_file_path crt, `Key_file_path key, `No_password, `Port port)
+    with Not_found -> None
+
+let server_from_config filename =
+    try
+        let ic = open_in filename in
+        let j = Ezjsonm.from_channel ic in
+        let host = find_string j ["host"] in
+        let port = find_float j ["port"] |> int_of_float in
+        let () = close_in ic in
+        let tls_config = find_tls_config j port in
+        server ?tls_config host port
+    with Not_found ->
+        print_endline "Invalid config file";
+        exit 1
+
  exception End_route_iteration of (Response.t * Body.t) Lwt.t
 
  (* Logging *)

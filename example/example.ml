@@ -5,7 +5,9 @@ open Request_ctx
 open Route
 
 let _ =
-    server "127.0.0.1" 8880
+    (*server "127.0.0.1" 8880*)
+
+    server_from_config "config.json"
 
     (** Uncomment this block to configure TLS
     |> fun ctx ->
