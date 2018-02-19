@@ -5,16 +5,18 @@ open Request_ctx
 open Route
 
 let _ =
-    (*server "127.0.0.1" 8880*)
-
     server_from_config "config.json"
+
+    (* or server "127.0.0.1" 8880 *)
 
     (** Uncomment this block to configure TLS
     |> fun ctx ->
         configure_tls ctx "./server.crt" "./server.key" *)
 
+    (** A directory of static files *)
     >| static "./static" "files"
 
+    (** A single static file *)
     >| file "./static/test.html" "testing"
 
     (** Reading query string value *)
@@ -23,6 +25,7 @@ let _ =
         | Some s -> respond_string ~status:`OK ~body:s ()
         | None -> respond_string ~status:`OK ~body:"TEST" ())
 
+    (** Multipart form parsing *)
     >| post "/multipart" (fun req params body ->
         Form.multipart req body >>= fun m ->
         let body = Printf.sprintf "%d file(s)\n" (List.length m) in
