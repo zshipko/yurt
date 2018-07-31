@@ -1,6 +1,9 @@
 ### 0.6
 
 * Switch to dune
+* Major API cleanup
+    - Removed `respond_` prefix from response functions
+    - Reorganized package layout
 
 ### 0.5
 

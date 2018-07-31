@@ -17,8 +17,10 @@ Yurt
 ## Usage
 
 ```ocaml
-open Yurt.Server
-open Yurt.Route
+open Yurt
+
+let _ =
+let open Server in
 
 (* Create a server *)
 server "127.0.0.1" 1234
@@ -26,9 +28,9 @@ server "127.0.0.1" 1234
 (* Add a handler *)
 >| get "/<name:string>" (fun req params body ->
     (* Get the url parameter called `name` *)
-    let name = param_string params "name" in
+    let name = Route.string params "name" in
     let body = Yurt_html.h1 (Printf.sprintf "Hello %s!\n" name) in
-    respond_html ~status:`OK ~body ())
+    html body)
 
 (* Run it *)
 |> run
