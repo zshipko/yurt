@@ -2,4 +2,4 @@
     (name yurt)
     (public_name yurt)
     (wrapped false)
-    (libraries cohttp-lwt-unix ezjsonm lwt_log))
+    (libraries dynlink str cohttp-lwt-unix ezjsonm lwt_log))

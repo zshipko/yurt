@@ -2,13 +2,10 @@
 
 (** Routing *)
 module Route = Yurt_route
-module Request_ctx = Yurt_request_ctx
 module Server = Yurt_server
 module Client = Yurt_client
 module Util = Yurt_util
 module Form = Yurt_form
 
 include Server
-include Route
-include Request_ctx
-include Form
+include Yurt_request_ctx

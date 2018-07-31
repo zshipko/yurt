@@ -83,19 +83,25 @@ let configure_tls ?password:(password=`No_password) (s : server) (crt_file : str
     s.tls_config <- Some (`Crt_file_path crt_file, `Key_file_path key_file, password, `Port s.port); s
 
 (** Finish with a string stream *)
-let respond_stream ~body:(s : string Lwt_stream.t) =
-    respond ~body:(Body.of_stream s)
+let stream ?flush ?headers ?(status = `OK) (s : string Lwt_stream.t) =
+    respond ?flush ?headers ~status ~body:(Body.of_stream s) ()
+
+let string ?flush ?headers ?(status = `OK) string =
+    respond ?flush ?headers ~status ~body:(Body.of_string string) ()
 
 (** Finish with JSON *)
-let respond_json ~body:(j : Ezjsonm.t) =
-    respond_string ~body:(Ezjsonm.to_string j)
+let json ?flush ?headers ?(status = `OK) j =
+    respond_string ?flush ?headers ~status ~body:(Ezjsonm.to_string j) ()
 
 (** Finish with HTML *)
-let respond_html ~body:(h : Yurt_html.t) =
-    respond_string ~body:(Yurt_html.to_string h)
+let html ?flush ?headers ?(status = `OK) (h : Yurt_html.t) =
+    respond_string ?flush ?headers ~status ~body:(Yurt_html.to_string h) ()
 
-let redirect (url : string) =
-    respond_redirect ~uri:(Uri.of_string url)
+let file ?headers filename =
+    respond_file ?headers ~fname:filename ()
+
+let redirect ?headers (url : string) =
+    respond_redirect ?headers ~uri:(Uri.of_string url) ()
 
 (** Sets a route for a compiled regex + endpoint function *)
 let register (s : server) (r : (string * route * endpoint) list) =
@@ -104,7 +110,7 @@ let register (s : server) (r : (string * route * endpoint) list) =
 
 (** Register a single route *)
 let register_route_string (s : server) (meth : string) (route : string) (ep : endpoint) =
-    register s [meth, Yurt_route.route_of_string route, ep]
+    register s [meth, Yurt_route.of_string route, ep]
 
 (** Register a single route *)
 let register_route (s : server) (meth : string) (r : route) (ep : endpoint) =
@@ -116,7 +122,7 @@ let register_static_file_route  ?headers (s: server) (path : string) (prefix : s
     if not (Yurt_util.is_safe_path path) then
         respond_not_found ()
     else
-        let filename = Filename.concat path (param_string params "path") in
+        let filename = Filename.concat path (Yurt_route.string params "path") in
         respond_file ?headers ~fname:filename ())
 
 (** Register a route for single file *)
@@ -142,10 +148,10 @@ let update (r : string) (ep : endpoint) (s : server) =
 let delete (r : string) (ep : endpoint) (s : server) =
     register_route_string s "DELETE" r ep
 
-let static (p : string) (r : string) (s : server) =
+let static_file (p : string) (r : string) (s : server) =
     register_static_file_route s p r
 
-let file (p : string) (f : string) (s : server) =
+let folder(p : string) (f : string) (s : server) =
     register_single_file_route s p f
 
 (** Start the server *)
@@ -155,7 +161,7 @@ let wrap (s : server) srv =
         try
             let (_, _route, _endpoint) = List.find (fun (_method, _route, _endpoint) ->
                 _method = Cohttp.Code.string_of_method (Request.meth req) && Yurt_route.matches _route uri) s.routes in
-            _endpoint req (get_params _route uri) body
+            _endpoint req (params _route uri) body
         with _ -> respond_not_found () in
     srv (make ~callback ())
 
@@ -179,8 +185,8 @@ let start (s : server) =
 
 exception Cannot_start_server
 
-let run ?fn:(fn=start) s =
-     try Lwt_main.run (fn s)
+let run s =
+     try Lwt_main.run (start s)
      with _ -> raise Cannot_start_server
 
 (** Add a handler *)
