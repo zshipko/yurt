@@ -148,10 +148,10 @@ let update (r : string) (ep : endpoint) (s : server) =
 let delete (r : string) (ep : endpoint) (s : server) =
     register_route_string s "DELETE" r ep
 
-let static_file (p : string) (r : string) (s : server) =
+let folder (p : string) (r : string) (s : server) =
     register_static_file_route s p r
 
-let folder(p : string) (f : string) (s : server) =
+let static_file (p : string) (f : string) (s : server) =
     register_single_file_route s p f
 
 (** Start the server *)
