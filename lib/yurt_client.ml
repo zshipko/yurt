@@ -1,5 +1,4 @@
 open Lwt.Infix
-open Cohttp
 open Cohttp_lwt_unix
 
 let get ?ctx ?headers url =

@@ -1,4 +1,3 @@
-open Lwt
 open Yurt_request_ctx
 
 module Cookie = struct
@@ -14,7 +13,6 @@ let set_cookie h (c : cookie) =
 
 (** Get from request cookies *)
 let cookies req =
-    let open Request in
     Cookie.extract Request.(req.headers)
 
 (** Find a cookie by name *)

@@ -1,3 +1,7 @@
+### 0.6
+
+* Switch to dune
+
 ### 0.5
 
 * Update to latest Lwt

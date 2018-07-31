@@ -31,9 +31,9 @@ let routevar_regexp = Str.regexp "<\\([a-z]+\\):\\([^>]+\\)>"
 (** Convert a route to string *)
 let rec string_of_route (r : route) : string  =
     match r with
-    | `String s -> "\\([^/]+\\)"
-    | `Int s -> "\\(-?[0-9]+\\)"
-    | `Float s -> "\\(-?[0-9]*[.e][0-9]*\\)"
+    | `String _ -> "\\([^/]+\\)"
+    | `Int _ -> "\\(-?[0-9]+\\)"
+    | `Float _ -> "\\(-?[0-9]*[.e][0-9]*\\)"
     | `Path s -> s
     | `Match (_, s) -> "\\(" ^ s ^ "\\)"
     | `Route p -> "/" ^ concat_filenames (List.map string_of_route p) ^ "/?"
@@ -46,7 +46,7 @@ let regexp_of_route r : Str.regexp =
         Hashtbl.replace route_cache r rx; rx
 
 (** "/user/<name:int>" -> `Path "user", `Int "name" *)
-let rec route_of_string (s : string) =
+let route_of_string (s : string) =
     let args = Str.split slash_regexp s in
     `Route (List.map (fun arg ->
         if Str.string_match routevar_regexp arg 0 then
@@ -131,7 +131,7 @@ let rec json_of_route r : Ezjsonm.value =
         | `String "false" -> `Bool false
         | `String i -> `String i
         | `Path i -> `String i
-        | `Match (name, i) -> `String i
+        | `Match (_, i) -> `String i
         | `Route i ->  `A (List.map json_of_route i)
 
 (* Convert params to JSON value *)

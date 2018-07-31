@@ -1,5 +1,5 @@
 opam-version: "1.2"
-version: "0.5"
+version: "0.6"
 maintainer: "Zach Shipko <zachshipko@gmail.com>"
 authors: ["Zach Shipko"]
 license: "ISC"
@@ -9,9 +9,7 @@ dev-repo: "https://github.com/zshipko/yurt.git"
 doc: "https://github.com/zshipko/yurt"
 
 depends: [
-    "ocamlfind" {build}
-    "ocamlbuild" {build}
-    "topkg" {build}
+    "dune" {build}
     "conduit-lwt-unix" {>= "1.0.0"}
     "cohttp-lwt-unix" {>= "1.0.0"}
     "lwt_log" {>= "1.0.0"}
@@ -19,7 +17,7 @@ depends: [
 ]
 
 build: [[
-    "ocaml" "./pkg/pkg.ml" "build" "--pinned" "%{pinned}%"
+   "dune" "build" "-p" name "-j" jobs
 ]]
 available: [ ocaml-version >= "4.03.0" ]
 

@@ -112,7 +112,7 @@ let register_route (s : server) (meth : string) (r : route) (ep : endpoint) =
 
 (** Register a route for a directory *)
 let register_static_file_route  ?headers (s: server) (path : string) (prefix : string) =
-    register_route s "GET" (`Route [`Path prefix; `Match ("path", ".*")]) (fun req params body ->
+    register_route s "GET" (`Route [`Path prefix; `Match ("path", ".*")]) (fun _req params _body ->
     if not (Yurt_util.is_safe_path path) then
         respond_not_found ()
     else
@@ -121,7 +121,7 @@ let register_static_file_route  ?headers (s: server) (path : string) (prefix : s
 
 (** Register a route for single file *)
 let register_single_file_route ?headers (s: server) (filename : string)  (rt : string) =
-    register_route s "GET" (`Route [`Path rt]) (fun req body params ->
+    register_route s "GET" (`Route [`Path rt]) (fun _req _body _params ->
         respond_file ?headers ~fname:filename ())
 
 let options (r : string) (ep : endpoint) (s : server) =
@@ -149,7 +149,7 @@ let file (p : string) (f : string) (s : server) =
     register_single_file_route s p f
 
 (** Start the server *)
-let rec wrap (s : server) srv =
+let wrap (s : server) srv =
     let callback _conn req body =
         let uri = Uri.path (Request.uri req) in
         try

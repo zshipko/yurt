@@ -1,3 +1,0 @@
-true: bin_annot, thread, package(cohttp-lwt-unix ezjsonm lwt_log)
-
-<*> : include

@@ -1,8 +1,0 @@
-description = "An HTTP Microframework for Cohttp"
-requires = "threads str dynlink cohttp-lwt-unix lwt_log ezjsonm"
-archive(byte) = "yurt.cma"
-archive(native) = "yurt.cmxa"
-plugin(byte) = "yurt.cma"
-plugin(native) = "yurt.cmxs"
-
-

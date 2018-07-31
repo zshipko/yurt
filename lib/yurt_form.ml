@@ -64,14 +64,14 @@ let is_multipart req : bool =
     Str.string_match (is_multipart_regexp) content_type 0
 
 let multipart req body : multipart list Lwt.t =
-    (** Output *)
+    (* Output *)
     let out = ref [] in
 
     let content_type = Yurt_util.unwrap_option_default (Header.get req.Request.headers "Content-Type") "" in
 
     let b = split_semicolon content_type in
     let boundary = match b with
-        | x::y::[] -> String.sub y 9 (String.length y - 9)
+        | _::y::[] -> String.sub y 9 (String.length y - 9)
         | _ -> raise Invalid_multipart_form in
     let boundary_a = "--" ^ boundary in
     let boundary_b = boundary_a ^ "--" in
@@ -99,7 +99,7 @@ let multipart req body : multipart list Lwt.t =
             let bl = Buffer.length buffer in
             if bl > 0 ||
                Hashtbl.length c.attr > 0 then
-                (** The new buffer contains an extra "\r\n" that needs to be removed *)
+                (* The new buffer contains an extra "\r\n" that needs to be removed *)
                 let b = Buffer.sub buffer 0 (bl - 2) in
                 let _ = !current.data <- Lwt_stream.of_string b in
                 let _ = Buffer.reset buffer in
