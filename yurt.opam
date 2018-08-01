@@ -5,7 +5,7 @@ license: "ISC"
 homepage: "https://github.com/zshipko/yurt"
 bug-reports: "https://github.com/zshipko/yurt/issues"
 dev-repo: "https://github.com/zshipko/yurt.git"
-doc: "https://github.com/zshipko/yurt"
+doc: "https://zshipko.github.io/yurt/doc"
 
 depends: [
     "dune" {build}
