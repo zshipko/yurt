@@ -55,9 +55,9 @@ module Query = struct
       let f = query_all req in
       `O (List.map (fun (k, v) ->
           if List.length v = 1 then
-              k, Ezjsonm.from_string (List.nth v 0)
+              k, Ezjsonm.encode_string (List.nth v 0)
           else
-              k, `A (List.map Ezjsonm.from_string v)) f)
+              k, `A (List.map Ezjsonm.encode_string v)) f)
 
   (** Get a string value for a single query string value by key *)
   let string req (name : string) : string option =
