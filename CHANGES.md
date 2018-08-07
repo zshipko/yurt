@@ -4,6 +4,7 @@
 * Major API cleanup
     - Removed `respond_` prefix from response functions
     - Reorganized package layout
+    - Removed `status_code` type
 
 ### 0.5
 
