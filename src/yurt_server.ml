@@ -83,18 +83,22 @@ let configure_tls ?password:(password=`No_password) (s : server) (crt_file : str
     s.tls_config <- Some (`Crt_file_path crt_file, `Key_file_path key_file, password, `Port s.port); s
 
 (** Finish with a string stream *)
-let stream ?flush ?headers ?(status = `OK) (s : string Lwt_stream.t) =
+let stream ?flush ?headers ?(status = 200) (s : string Lwt_stream.t) =
+    let status = Cohttp.Code.status_of_code status in
     respond ?flush ?headers ~status ~body:(Body.of_stream s) ()
 
-let string ?flush ?headers ?(status = `OK) string =
+let string ?flush ?headers ?(status = 200) string =
+    let status = Cohttp.Code.status_of_code status in
     respond ?flush ?headers ~status ~body:(Body.of_string string) ()
 
 (** Finish with JSON *)
-let json ?flush ?headers ?(status = `OK) j =
+let json ?flush ?headers ?(status = 200) j =
+    let status = Cohttp.Code.status_of_code status in
     respond_string ?flush ?headers ~status ~body:(Ezjsonm.to_string j) ()
 
 (** Finish with HTML *)
-let html ?flush ?headers ?(status = `OK) (h : Yurt_html.t) =
+let html ?flush ?headers ?(status = 200) (h : Yurt_html.t) =
+    let status = Cohttp.Code.status_of_code status in
     respond_string ?flush ?headers ~status ~body:(Yurt_html.to_string h) ()
 
 let file ?headers filename =

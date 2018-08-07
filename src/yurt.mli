@@ -82,10 +82,8 @@ module Request = Cohttp_lwt_unix.Request
 module Response = Cohttp.Response
 module Header = Cohttp.Header
 
-type status_code = Cohttp.Code.status_code
-
 (** Response type *)
-and response = (Response.t * Body.t) Lwt.t
+type response = (Response.t * Body.t) Lwt.t
 
 (** HTTP handler *)
 and endpoint = Request.t -> Route.params -> Body.t -> response
@@ -147,7 +145,7 @@ module Server : sig
     val stream:
         ?flush:bool ->
         ?headers:Header.t ->
-        ?status:status_code ->
+        ?status:int ->
         string Lwt_stream.t ->
         (Response.t * Body.t) Lwt.t
 
@@ -155,7 +153,7 @@ module Server : sig
     val json:
         ?flush:bool ->
         ?headers:Header.t ->
-        ?status:status_code ->
+        ?status:int->
         Ezjsonm.t ->
         (Response.t * Body.t) Lwt.t
 
@@ -163,7 +161,7 @@ module Server : sig
     val html:
         ?flush:bool ->
         ?headers:Header.t ->
-        ?status:status_code ->
+        ?status:int->
         Yurt_html.t ->
         (Response.t * Body.t) Lwt.t
 
@@ -171,7 +169,7 @@ module Server : sig
     val string:
         ?flush:bool ->
         ?headers:Header.t ->
-        ?status:status_code ->
+        ?status:int->
         string ->
         (Response.t * Body.t) Lwt.t
 
