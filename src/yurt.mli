@@ -121,12 +121,12 @@ module Server : sig
         host : string;
         port : int;
         mutable routes : (string * Route.route * endpoint) list;
-        mutable tls_config : Conduit_lwt_unix.server_tls_config option;
+        mutable tls_config : Tls.Config.server option;
         mutable logger : Lwt_log.logger;
     }
 
     (** Create a new server *)
-    val server : ?tls_config:Conduit_lwt_unix.server_tls_config ->
+    val server : ?tls_config:Tls.Config.server ->
                     ?logger:Lwt_log.logger -> string -> int -> server
 
     (** Create a new server from an existing configuration file *)
@@ -139,7 +139,7 @@ module Server : sig
     val log_fatal : server -> string -> string -> unit
 
     (** Configure TLS after the server has been created *)
-    val configure_tls : ?password:[`Password of bool -> string | `No_password] -> server -> string -> string -> server
+    val configure_tls : server -> string -> string -> server
 
     (** Respond with a stream *)
     val stream:
@@ -231,41 +231,41 @@ end
 (** [Client] contains functions for sending HTTP requests *)
 module Client : sig
     (** Send a GET request *)
-    val get : ?ctx:Cohttp_lwt_unix.Net.ctx ->
+    val get : ?resolvers:Conduit.resolvers ->
               ?headers:Header.t ->
               string -> (Response.t * string) Lwt.t
 
     (** Send a POST request *)
-    val post : ?ctx:Cohttp_lwt_unix.Net.ctx ->
+    val post : ?resolvers:Conduit.resolvers ->
                ?headers:Header.t ->
                ?body:Body.t ->
                string -> (Response.t * string) Lwt.t
 
     (** Send a POST request with form encoded data *)
-    val post_form : ?ctx:Cohttp_lwt_unix.Net.ctx ->
+    val post_form : ?resolvers:Conduit.resolvers ->
                ?headers:Header.t ->
                params:(string * string list) list ->
                string -> (Response.t * string) Lwt.t
 
     (** Send another type of request other than POST or GET *)
-    val request : ?ctx:Cohttp_lwt_unix.Net.ctx ->
+    val request : ?resolvers:Conduit.resolvers ->
                ?headers:Header.t ->
                ?body:Body.t ->
                Cohttp.Code.meth -> string -> (Response.t * string) Lwt.t
 
     (** Send a get request and return JSON response *)
-    val get_json : ?ctx:Cohttp_lwt_unix.Net.ctx ->
+    val get_json : ?resolvers:Conduit.resolvers ->
               ?headers:Header.t ->
               string -> (Response.t * Ezjsonm.t) Lwt.t
 
     (** Send a post request and return JSON response *)
-    val post_json : ?ctx:Cohttp_lwt_unix.Net.ctx ->
+    val post_json : ?resolvers:Conduit.resolvers ->
                ?headers:Header.t ->
                ?body:Body.t ->
                string -> (Response.t * Ezjsonm.t) Lwt.t
 
     (** Send a POST request with from encoded data and return JSON response *)
-    val post_form_json : ?ctx:Cohttp_lwt_unix.Net.ctx ->
+    val post_form_json : ?resolvers:Conduit.resolvers ->
                ?headers:Header.t ->
                ?params:(string * string list) list ->
                string -> (Response.t * Ezjsonm.t) Lwt.t

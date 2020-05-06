@@ -1,19 +1,15 @@
 open Yurt_route
 open Yurt_request_ctx
 
-open Lwt
 include Cohttp_lwt_unix.Server
 
 type server = {
     host : string;
     port : int;
     mutable routes : (string * route * endpoint) list;
-    mutable tls_config : Conduit_lwt_unix.server_tls_config option;
+    mutable tls_config : Tls.Config.server option;
     mutable logger : Lwt_log.logger;
 }
-
-let tls_server_key_of_config (crt, key, pass, _) =
-    `TLS (crt, key, pass)
 
 let server ?tls_config ?logger:(logger=(!Lwt_log.default))  (host : string) (port : int) : server =
     {
@@ -36,11 +32,15 @@ let find_float j path =
     | `Float f -> f
     | _ -> raise Not_found
 
-let find_tls_config j port =
+let find_tls_config j =
     try
-        let crt = find_string j ["ssl-certificate"] in
+        let crts = find_string j ["ssl-certificate"] in
         let key = find_string j ["ssl-key"] in
-        Some (`Crt_file_path crt, `Key_file_path key, `No_password, `Port port)
+        ( match X509.Certificate.decode_pem_multiple (Cstruct.of_string crts),
+                X509.Private_key.decode_pem (Cstruct.of_string key) with
+        | Ok crts, Ok (`RSA key) ->
+          Some (Tls.Config.server ~certificates:(`Single (crts, key)) ())
+        | _ -> None )
     with Not_found -> None
 
 let server_from_config filename =
@@ -50,7 +50,7 @@ let server_from_config filename =
         let host = find_string j ["host"] in
         let port = find_float j ["port"] |> int_of_float in
         let () = close_in ic in
-        let tls_config = find_tls_config j port in
+        let tls_config = find_tls_config j in
         server ?tls_config host port
     with Not_found ->
         print_endline "Invalid config file";
@@ -78,9 +78,21 @@ let server_from_config filename =
  let log_fatal (s : server) section msg =
      Lwt_log.ign_fatal ~section:(Lwt_log.Section.make section) ~logger:s.logger msg
 
+let load_file filename =
+  let ic = open_in_bin filename in
+  let ln = in_channel_length ic in
+  let rs = Bytes.create ln in
+  really_input ic rs 0 ln ; close_in ic ;
+  Cstruct.of_bytes rs
+
 (** Configure TLS for server *)
-let configure_tls ?password:(password=`No_password) (s : server) (crt_file : string) (key_file : string) : server =
-    s.tls_config <- Some (`Crt_file_path crt_file, `Key_file_path key_file, password, `Port s.port); s
+let configure_tls (s : server) (crt_file : string) (key_file : string) : server =
+  match X509.Certificate.decode_pem_multiple (load_file crt_file),
+        X509.Private_key.decode_pem (load_file key_file) with
+  | Ok crts, Ok (`RSA key) ->
+    let cfg = Tls.Config.server ~certificates:(`Single (crts, key)) () in
+    s.tls_config <- Some cfg ; s
+  | _ -> s
 
 (** Finish with a string stream *)
 let stream ?flush ?headers ?(status = 200) (s : string Lwt_stream.t) =
@@ -159,7 +171,7 @@ let static_file (p : string) (f : string) (s : server) =
     register_single_file_route s p f
 
 (** Start the server *)
-let wrap (s : server) srv =
+let cohttp_server (s : server) =
     let callback _conn req body =
         let uri = Uri.path (Request.uri req) in
         try
@@ -167,7 +179,7 @@ let wrap (s : server) srv =
                 _method = Cohttp.Code.string_of_method (Request.meth req) && Yurt_route.matches _route uri) s.routes in
             _endpoint req (params _route uri) body
         with _ -> respond_not_found () in
-    srv (make ~callback ())
+    make ~callback ()
 
 (** Run as daemon *)
 let daemonize ?directory ?syslog (s : server) =
@@ -175,17 +187,25 @@ let daemonize ?directory ?syslog (s : server) =
 
 (** Start a configured server with attached endpoints *)
 let start (s : server) =
-    match s.tls_config with
-    | Some config ->
-        Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:(Some (tls_server_key_of_config config)) ()
-        >>= (fun ctx ->
-            let ctx' = Cohttp_lwt_unix.Net.init ?ctx:(Some ctx) () in
-            wrap s (create ~mode:(`TLS config) ~ctx:ctx'))
-     | None ->
-        Conduit_lwt_unix.init ?src:(Some s.host) ?tls_server_key:None ()
-        >>= (fun ctx ->
-            let ctx' = Cohttp_lwt_unix.Net.init ?ctx:(Some ctx) () in
-            wrap s (create ~mode:(`TCP (`Port s.port)) ~ctx:ctx'))
+  let sockaddr =
+    match Unix.gethostbyname s.host with
+    | { Unix.h_addrtype= Unix.PF_UNIX; Unix.h_name; _ } -> Unix.ADDR_UNIX h_name
+    | { Unix.h_addrtype= _; Unix.h_addr_list; _ } ->
+      if Array.length h_addr_list > 0
+      then Unix.ADDR_INET (h_addr_list.(0), s.port)
+      else Unix.ADDR_INET (Unix.inet_addr_loopback, s.port)
+    | exception _ -> Unix.ADDR_INET (Unix.inet_addr_loopback, s.port) in
+  match s.tls_config with
+  | Some tls_config ->
+    let key = Conduit_lwt_unix_tls.TCP.configuration in
+    let cfg = { Conduit_lwt_unix_tcp.sockaddr; capacity= 40; }, tls_config in
+    let service = Conduit_lwt_unix_tls.TCP.service in
+    create key cfg service (cohttp_server s)
+  | None ->
+    let key = Conduit_lwt_unix_tcp.configuration in
+    let cfg = { Conduit_lwt_unix_tcp.sockaddr; capacity= 40; } in
+    let service = Conduit_lwt_unix_tcp.service in
+    create key cfg service (cohttp_server s)
 
 exception Cannot_start_server
 
