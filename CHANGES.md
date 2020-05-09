@@ -1,3 +1,9 @@
+### 0.7
+
+* Conduit 3.0
+* API cleanup
+* Dune 2.0
+
 ### 0.6
 
 * Switch to dune

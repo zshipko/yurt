@@ -164,7 +164,7 @@ let update (r : string) (ep : endpoint) (s : server) =
 let delete (r : string) (ep : endpoint) (s : server) =
     register_route_string s "DELETE" r ep
 
-let folder (p : string) (r : string) (s : server) =
+let static_files (p : string) (r : string) (s : server) =
     register_static_file_route s p r
 
 let static_file (p : string) (f : string) (s : server) =
@@ -213,11 +213,12 @@ let run s =
      try Lwt_main.run (start s)
      with _ -> raise Cannot_start_server
 
+let route (s : server) (fn : server -> server) : server =
+  fn s
+
 (** Add a handler *)
-let (>|) (s : server) (fn :  server -> server ) : server =
-    fn s
+let (>|) (s : server) (fn :  server -> server ) : server = route
 
 (** Run a function that returns unit in the handler definition chain *)
 let (>||) (s : server) (fn : server -> unit) : server =
     fn s; s
-

@@ -215,7 +215,7 @@ module Server : sig
     val static_file : string -> string -> server -> server
 
     (** Reqister endpoint that will serve files from a firectory *)
-    val folder : string -> string -> server -> server
+    val static_files: string -> string -> server -> server
 
     (** Daemonize the server *)
     val daemonize : ?directory:string -> ?syslog:bool -> server -> unit
@@ -224,6 +224,7 @@ module Server : sig
     exception Cannot_start_server
     val start: server -> unit Lwt.t
     val run : server -> unit
+    val route : server -> (server -> server) -> server
     val (>|) : server -> (server -> server) -> server
     val (>||) : server -> (server -> unit) -> server
 end

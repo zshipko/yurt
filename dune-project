@@ -1,4 +1,4 @@
-(lang dune 1.0)
+(lang dune 2.0)
 
 (name bimage)
-(version 0.6)
+(version 0.7)
