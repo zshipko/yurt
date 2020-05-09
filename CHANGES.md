@@ -2,7 +2,7 @@
 
 * Conduit 3.0
 * API cleanup
-* Dune 2.0
+* Dune 2.0/ocamlformat
 
 ### 0.6
 
